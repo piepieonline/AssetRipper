@@ -25,13 +25,14 @@ public sealed class PathIdMapExporter : IPostExporter
 			gameInfo.Files.Add(fileInfo);
 			foreach (IUnityObjectBase asset in collection)
 			{
-				if (asset is IMesh or ITexture or IAudioClip or ITextAsset)//Commonly useful asset types
+				// if (asset is IMesh or ITexture or IAudioClip or ITextAsset)//Commonly useful asset types
 				{
 					fileInfo.Assets.Add(new()
 					{
 						Name = (asset as IHasNameString)?.NameString,
 						Type = asset.ClassName,
 						PathID = asset.PathID,
+						GUID = asset.GUID.ToString()
 					});
 				}
 			}

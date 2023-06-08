@@ -5,6 +5,7 @@ using AssetRipper.Assets.Export.Yaml;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.IO.Files;
 using AssetRipper.Yaml;
+using System.Text.Json;
 
 namespace AssetRipper.Assets;
 
@@ -13,9 +14,28 @@ namespace AssetRipper.Assets;
 /// </summary>
 public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 {
+	public static Dictionary<string, string> pathToGUID = null;
+
 	protected UnityObjectBase(AssetInfo assetInfo)
 	{
+		if (pathToGUID == null)
+		{
+			try
+			{
+				pathToGUID = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText("../currentPaths.json"));
+			}
+			catch
+			{
+				pathToGUID = new Dictionary<string, string>();
+				Console.WriteLine($"No existing GUIDs, starting fresh");
+			}
+		}
+
 		AssetInfo = assetInfo;
+
+		var guidKey = $"{Collection.Name}-{PathID}";
+
+		GUID = pathToGUID.ContainsKey(guidKey) ? UnityGUID.Parse(pathToGUID[guidKey]) : UnityGUID.NewGuid();
 	}
 
 	private OriginalPathDetails? originalPathDetails;
@@ -24,7 +44,7 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 	public int ClassID => AssetInfo.ClassID;
 	public long PathID => AssetInfo.PathID;
 	public virtual string ClassName => GetType().Name;
-	public UnityGUID GUID { get; } = UnityGUID.NewGuid();
+	public UnityGUID GUID { get; private set; }
 	public IUnityObjectBase? MainAsset { get; set; }
 
 	public YamlDocument ExportYamlDocument(IExportContainer container)
