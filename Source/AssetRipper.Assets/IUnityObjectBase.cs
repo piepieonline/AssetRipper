@@ -16,7 +16,7 @@ public interface IUnityObjectBase : IUnityAssetBase
 	string ClassName { get; }
 	AssetCollection Collection { get; }
 	long PathID { get; }
-	UnityGUID GUID { get; }
+	UnityGUID GUID { get; set; }
 	string? OriginalPath { get; set; }
 	string? OriginalDirectory { get; set; }
 	string? OriginalName { get; set; }

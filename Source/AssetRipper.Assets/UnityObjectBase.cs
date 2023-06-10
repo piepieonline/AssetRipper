@@ -23,20 +23,42 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 		{
 			try
 			{
-				pathToGUID = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText("../currentPaths.json"));
+				pathToGUID = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Join(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "..", "/currentPaths.json")));
 			}
 			catch
 			{
 				pathToGUID = new Dictionary<string, string>();
-				Console.WriteLine($"No existing GUIDs, starting fresh");
+				var preColor = Console.ForegroundColor;
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine($"WARNING: No existing GUIDs found, this will break things. Abort? (y/n)");
+				Console.ForegroundColor = preColor;
+				if (Console.ReadLine() != "n") throw new Exception("Missing currentPaths.json");
 			}
 		}
 
 		AssetInfo = assetInfo;
 
-		var guidKey = $"{Collection.Name}-{PathID}";
 
-		GUID = pathToGUID.ContainsKey(guidKey) ? UnityGUID.Parse(pathToGUID[guidKey]) : UnityGUID.NewGuid();
+		if (Collection.Name == "resources.assets" && PathID != 0)
+		{
+			var guidKey = $"{Collection.Name}-{PathID}";
+			if (pathToGUID.ContainsKey(guidKey))
+			{
+				GUID = UnityGUID.Parse(pathToGUID[guidKey]);
+			}
+			else
+			{
+				var preColor = Console.ForegroundColor;
+				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.WriteLine($"MISSING GUID: Generating GUID for {guidKey}");
+				Console.ForegroundColor = preColor;
+				GUID = UnityGUID.NewGuid();
+			}
+		}
+		else
+		{
+			GUID = UnityGUID.NewGuid();
+		}
 	}
 
 	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -46,7 +68,7 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 	public int ClassID => AssetInfo.ClassID;
 	public long PathID => AssetInfo.PathID;
 	public virtual string ClassName => GetType().Name;
-	public UnityGUID GUID { get; private set; }
+	public UnityGUID GUID { get; set; }
 	public IUnityObjectBase? MainAsset { get; set; }
 
 	public YamlDocument ExportYamlDocument(IExportContainer container)
@@ -158,5 +180,10 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 				: Path.Combine(Directory, NameWithExtension);
 			return string.IsNullOrEmpty(result) ? null : result;
 		}
+	}
+
+	public static explicit operator UnityObjectBase(UnityGUID v)
+	{
+		throw new NotImplementedException();
 	}
 }

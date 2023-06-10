@@ -46,4 +46,8 @@
 		<RuntimeHostConfigurationOption Include="System.Globalization.Invariant" Value="true" />
 	</ItemGroup>
 
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="copy /Y &quot;$(OutputPath)\*&quot; &quot;D:\Game Modding\ShadowsOfDoubt\_Mods\ShadowsOfDoubtMods\ShadowsOfDoubtEditorSetup\CopyToBuild\Tools\AssetRipper\Debug\&quot;" />
+		<Exec Command="copy /Y &quot;$(OutputPath)\*&quot; &quot;D:\Game Modding\ShadowsOfDoubt\_Mods\ShadowsOfDoubtMods\ShadowsOfDoubtEditorSetup\bin\Debug\net7.0\Tools\AssetRipper\Debug\&quot;" />
+	</Target>
 </Project>
