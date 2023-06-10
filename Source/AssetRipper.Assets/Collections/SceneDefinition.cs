@@ -63,6 +63,11 @@ public sealed class SceneDefinition
 	public IReadOnlyList<AssetCollection> Collections => collections;
 
 	/// <summary>
+	/// All the assets inside the <see cref="Collections"/> that make up this scene.
+	/// </summary>
+	public IEnumerable<IUnityObjectBase> Assets => collections.SelectMany(c => c);
+
+	/// <summary>
 	/// Adds an <see cref="AssetCollection"/> to this <see cref="SceneDefinition"/> and sets its <see cref="AssetCollection.Scene"/> property.
 	/// </summary>
 	/// <param name="collection">The collection to be added.</param>
@@ -71,6 +76,18 @@ public sealed class SceneDefinition
 		ThrowIfAlreadyPartOfAScene(collection);
 		collections.Add(collection);
 		collection.Scene = this;
+	}
+
+	public void RemoveCollection(AssetCollection collection)
+	{
+		if (collections.Remove(collection))
+		{
+			collection.Scene = null;
+		}
+		else
+		{
+			throw new ArgumentException($"{collection} is not part of this scene.", nameof(collection));
+		}
 	}
 
 	private static void ThrowIfAlreadyPartOfAScene(AssetCollection collection)

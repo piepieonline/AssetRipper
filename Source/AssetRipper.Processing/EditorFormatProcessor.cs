@@ -1,4 +1,4 @@
-﻿using AssetRipper.Assets;
+using AssetRipper.Assets;
 using AssetRipper.Assets.Bundles;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Generics;
@@ -6,7 +6,7 @@ using AssetRipper.Assets.Interfaces;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.Import.Configuration;
 using AssetRipper.Import.Logging;
-using AssetRipper.Import.Utils;
+using AssetRipper.Import.Structure.Assembly.Managers;
 using AssetRipper.IO.Files.SerializedFiles;
 using AssetRipper.Processing.AnimationClips;
 using AssetRipper.SourceGenerated.Classes.ClassID_1;
@@ -59,11 +59,13 @@ namespace AssetRipper.Processing
 	{
 		private ITagManager? tagManager;
 		private readonly BundledAssetsExportMode bundledAssetsExportMode;
+		private readonly PathChecksumCache checksumCache;
 		private AnimationCache? currentAnimationCache;
 
-		public EditorFormatProcessor(BundledAssetsExportMode bundledAssetsExportMode)
+		public EditorFormatProcessor(BundledAssetsExportMode bundledAssetsExportMode, IAssemblyManager assemblyManager)
 		{
 			this.bundledAssetsExportMode = bundledAssetsExportMode;
+			checksumCache = new PathChecksumCache(assemblyManager);
 		}
 
 		public void Process(GameBundle gameBundle, UnityVersion projectVersion)
@@ -103,7 +105,7 @@ namespace AssetRipper.Processing
 					spriteAtlas.ConvertToEditorFormat();
 					break;
 				case IAnimationClip animationClip:
-					AnimationClipConverter.Process(animationClip, currentAnimationCache!);
+					AnimationClipConverter.Process(animationClip, currentAnimationCache!, checksumCache);
 					break;
 				case ITerrain terrain:
 					terrain.ConvertToEditorFormat();
@@ -174,7 +176,7 @@ namespace AssetRipper.Processing
 		private static void SetOriginalPaths(IAssetBundle bundle, BundledAssetsExportMode bundledAssetsExportMode)
 		{
 			string bundleName = bundle.GetAssetBundleName();
-			string bundleDirectory = bundleName + ObjectUtils.DirectorySeparator;
+			string bundleDirectory = bundleName + DirectorySeparator;
 			string directory = Path.Combine(AssetBundleFullPath, bundleName);
 			foreach (AccessPairBase<Utf8String, IAssetInfo> kvp in bundle.Container_C142)
 			{
@@ -261,7 +263,7 @@ namespace AssetRipper.Processing
 					string pathSection = splitPath[i];
 					if (string.Equals(pathSection, AssetsKeyword, StringComparison.OrdinalIgnoreCase))
 					{
-						return string.Join(ObjectUtils.DirectorySeparator, new ArraySegment<string>(splitPath, i, splitPath.Length - i));
+						return string.Join(DirectorySeparator, new ArraySegment<string>(splitPath, i, splitPath.Length - i));
 					}
 				}
 				return string.Empty;
@@ -274,7 +276,8 @@ namespace AssetRipper.Processing
 
 		private const string ResourcesKeyword = "Resources";
 		private const string AssetBundleKeyword = "AssetBundles";
-		private const string AssetsDirectory = AssetsKeyword + ObjectUtils.DirectorySeparator;
+		private const string DirectorySeparator = "/";
+		private const string AssetsDirectory = AssetsKeyword + DirectorySeparator;
 		private const string ResourceFullPath = AssetsDirectory + ResourcesKeyword;
 		//private const string AssetBundleFullPath = AssetsDirectory + AssetBundleKeyword;
 		private const string AssetBundleFullPath = AssetsDirectory + "Asset_Bundles";

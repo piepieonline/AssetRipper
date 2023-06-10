@@ -1,6 +1,5 @@
 ﻿using AssetRipper.Assets.Generics;
 using AssetRipper.Assets.Metadata;
-using AssetRipper.Assets.Utils;
 using AssetRipper.SourceGenerated.Classes.ClassID_1;
 using AssetRipper.SourceGenerated.Classes.ClassID_18;
 using AssetRipper.SourceGenerated.Classes.ClassID_2;
@@ -51,9 +50,9 @@ namespace AssetRipper.SourceGenerated.Extensions
 			{
 				return gameObject.Component_C1_AssetList_ComponentPair.Select(pair => pair.Component);
 			}
-			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_4_0())
+			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_5_0())
 			{
-				return gameObject.Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_4_0.Select(pair => pair.Value);
+				return gameObject.Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_5_0.Select(pair => pair.Value);
 			}
 			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_5_0_0())
 			{
@@ -71,9 +70,9 @@ namespace AssetRipper.SourceGenerated.Extensions
 			{
 				return new ComponentPairAccessList(gameObject.Component_C1_AssetList_ComponentPair);
 			}
-			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_4_0())
+			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_5_0())
 			{
-				return new AssetPairAccessList<PPtr_Component_3_4_0>(gameObject.Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_4_0);
+				return new AssetPairAccessList<PPtr_Component_3_5_0>(gameObject.Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_5_0);
 			}
 			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_5_0_0())
 			{
@@ -91,9 +90,9 @@ namespace AssetRipper.SourceGenerated.Extensions
 			{
 				gameObject.Component_C1_AssetList_ComponentPair.AddNew().Component.SetAsset(gameObject.Collection, component);
 			}
-			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_4_0())
+			else if (gameObject.Has_Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_5_0())
 			{
-				AssetPair<int, PPtr_Component_3_4_0> pair = gameObject.Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_4_0.AddNew();
+				AssetPair<int, PPtr_Component_3_5_0> pair = gameObject.Component_C1_AssetList_AssetPair_Int32_PPtr_Component_3_5_0.AddNew();
 				pair.Key = (int)classID;
 				pair.Value.SetAsset(gameObject.Collection, component);
 			}
@@ -214,6 +213,7 @@ namespace AssetRipper.SourceGenerated.Extensions
 			foreach (IComponent component in root.GetComponentAccessList().WhereNotNull())
 			{
 				yield return component;
+
 				if (component is ITransform trfm)
 				{
 					transform = trfm;
@@ -228,32 +228,11 @@ namespace AssetRipper.SourceGenerated.Extensions
 			foreach (ITransform? child in transform.Children_C4P.ThrowIfNull())
 			{
 				IGameObject childGO = child.GameObject_C4P ?? throw new NullReferenceException("GameObject for Transform cannot be null.");
+
 				foreach (IEditorExtension childElement in childGO.FetchHierarchy())
 				{
 					yield return childElement;
 				}
-			}
-		}
-
-		public static IReadOnlyDictionary<uint, string> BuildTOS(this IGameObject gameObject)
-		{
-			Dictionary<uint, string> tos = new() { { 0, string.Empty } };
-			gameObject.BuildTOS(gameObject, string.Empty, tos);
-			return tos;
-		}
-
-		private static void BuildTOS(this IGameObject gameObject, IGameObject parent, string parentPath, Dictionary<uint, string> tos)
-		{
-			ITransform transform = parent.GetTransform();
-			foreach (ITransform? childTransform in transform.Children_C4P)
-			{
-				_ = childTransform ?? throw new NullReferenceException();
-				IGameObject child = childTransform.GameObject_C4P ?? throw new NullReferenceException();
-				string path = string.IsNullOrEmpty(parentPath) ? child.NameString : $"{parentPath}/{child.NameString}";
-				uint pathHash = CrcUtils.CalculateDigestUTF8(path);
-				tos[pathHash] = path;
-
-				gameObject.BuildTOS(child, path, tos);
 			}
 		}
 

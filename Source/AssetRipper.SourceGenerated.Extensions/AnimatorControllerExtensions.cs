@@ -15,10 +15,10 @@ using AssetRipper.SourceGenerated.Subclasses.ChildAnimatorState;
 using AssetRipper.SourceGenerated.Subclasses.ChildAnimatorStateMachine;
 using AssetRipper.SourceGenerated.Subclasses.ChildMotion;
 using AssetRipper.SourceGenerated.Subclasses.PPtr_AnimationClip;
+using AssetRipper.SourceGenerated.Subclasses.PPtr_AnimatorState;
+using AssetRipper.SourceGenerated.Subclasses.PPtr_AnimatorStateTransition;
 using AssetRipper.SourceGenerated.Subclasses.PPtr_AnimatorTransition;
 using AssetRipper.SourceGenerated.Subclasses.PPtr_MonoBehaviour;
-using AssetRipper.SourceGenerated.Subclasses.PPtr_State;
-using AssetRipper.SourceGenerated.Subclasses.PPtr_Transition;
 using AssetRipper.SourceGenerated.Subclasses.StateBehavioursPair;
 using AssetRipper.SourceGenerated.Subclasses.StateConstant;
 using AssetRipper.SourceGenerated.Subclasses.StateKey;
@@ -31,7 +31,7 @@ namespace AssetRipper.SourceGenerated.Extensions
 {
 	public static class AnimatorControllerExtensions
 	{
-		public static bool IsContainsAnimationClip(this IAnimatorController controller, IAnimationClip clip)
+		public static bool ContainsAnimationClip(this IAnimatorController controller, IAnimationClip clip)
 		{
 			foreach (IPPtr_AnimationClip clipPtr in controller.AnimationClips_C91)
 			{
@@ -43,7 +43,7 @@ namespace AssetRipper.SourceGenerated.Extensions
 			return false;
 		}
 
-		public static PPtr_MonoBehaviour_5_0_0[] GetStateBehaviours(this IAnimatorController controller, int layerIndex)
+		public static IMonoBehaviour?[] GetStateBehaviours(this IAnimatorController controller, int layerIndex)
 		{
 			if (controller.Has_StateMachineBehaviourVectorDescription_C91())
 			{
@@ -52,13 +52,13 @@ namespace AssetRipper.SourceGenerated.Extensions
 				key.SetValues(layerIndex, layerID);
 				if (controller.StateMachineBehaviourVectorDescription_C91.StateMachineBehaviourRanges.TryGetValue(key, out StateRange? range))
 				{
-					return GetStateBehaviours(controller.StateMachineBehaviourVectorDescription_C91, controller.StateMachineBehaviours_C91!, range);
+					return GetStateBehaviours(controller.StateMachineBehaviourVectorDescription_C91, controller.StateMachineBehaviours_C91P, range);
 				}
 			}
-			return Array.Empty<PPtr_MonoBehaviour_5_0_0>();
+			return Array.Empty<IMonoBehaviour>();
 		}
 
-		public static PPtr_MonoBehaviour_5_0_0[] GetStateBehaviours(this IAnimatorController controller, int stateMachineIndex, int stateIndex)
+		public static IMonoBehaviour?[] GetStateBehaviours(this IAnimatorController controller, int stateMachineIndex, int stateIndex)
 		{
 			if (controller.Has_StateMachineBehaviourVectorDescription_C91())
 			{
@@ -70,18 +70,18 @@ namespace AssetRipper.SourceGenerated.Extensions
 				key.SetValues(layerIndex, stateID);
 				if (controller.StateMachineBehaviourVectorDescription_C91.StateMachineBehaviourRanges.TryGetValue(key, out StateRange? range))
 				{
-					return GetStateBehaviours(controller.StateMachineBehaviourVectorDescription_C91, controller.StateMachineBehaviours_C91!, range);
+					return GetStateBehaviours(controller.StateMachineBehaviourVectorDescription_C91, controller.StateMachineBehaviours_C91P, range);
 				}
 			}
-			return Array.Empty<PPtr_MonoBehaviour_5_0_0>();
+			return Array.Empty<IMonoBehaviour>();
 		}
 
-		private static PPtr_MonoBehaviour_5_0_0[] GetStateBehaviours(
+		private static IMonoBehaviour?[] GetStateBehaviours(
 			IStateMachineBehaviourVectorDescription controllerStateMachineBehaviourVectorDescription,
-			AssetList<PPtr_MonoBehaviour_5_0_0> controllerStateMachineBehaviours,
+			PPtrAccessList<PPtr_MonoBehaviour_5_0_0, IMonoBehaviour> controllerStateMachineBehaviours,
 			StateRange range)
 		{
-			PPtr_MonoBehaviour_5_0_0[] stateMachineBehaviours = new PPtr_MonoBehaviour_5_0_0[range.Count];
+			IMonoBehaviour?[] stateMachineBehaviours = new IMonoBehaviour?[range.Count];
 			for (int i = 0; i < range.Count; i++)
 			{
 				int index = (int)controllerStateMachineBehaviourVectorDescription.StateMachineBehaviourIndices[range.StartIndex + i];
@@ -152,8 +152,7 @@ namespace AssetRipper.SourceGenerated.Extensions
 						}
 					}
 				}
-				IAnimatorStateMachine? stateMachine = layer.StateMachine_PPtr_StateMachine?.TryGetAsset(animatorController.Collection)
-					?? layer.StateMachine_PPtr_AnimatorStateMachine?.TryGetAsset(animatorController.Collection);
+				IAnimatorStateMachine? stateMachine = layer.StateMachine.TryGetAsset(animatorController.Collection);
 				if (stateMachine is not null)
 				{
 					foreach (IUnityObjectBase? reference in stateMachine.FetchEditorHierarchy())
@@ -228,7 +227,7 @@ namespace AssetRipper.SourceGenerated.Extensions
 				}
 				if (stateMachine.Has_LocalTransitions_C1107())
 				{
-					foreach ((PPtr_State statePPtr, AssetList<PPtr_Transition> list) in stateMachine.LocalTransitions_C1107)
+					foreach ((PPtr_AnimatorState_4_0_0 statePPtr, AssetList<PPtr_AnimatorStateTransition_4_0_0> list) in stateMachine.LocalTransitions_C1107)
 					{
 						IAnimatorState? state = statePPtr.TryGetAsset(stateMachine.Collection);
 						if (state is not null)
@@ -238,13 +237,13 @@ namespace AssetRipper.SourceGenerated.Extensions
 								yield return reference;
 							}
 						}
-						foreach (PPtr_Transition transition in list)
+						foreach (PPtr_AnimatorStateTransition_4_0_0 transition in list)
 						{
 							yield return transition.TryGetAsset(stateMachine.Collection);
 						}
 					}
 				}
-				foreach ((PPtr_State statePPtr, AssetList<PPtr_Transition> list) in stateMachine.OrderedTransitions_C1107)
+				foreach ((PPtr_AnimatorState_4_0_0 statePPtr, AssetList<PPtr_AnimatorStateTransition_4_0_0> list) in stateMachine.OrderedTransitions_C1107)
 				{
 					IAnimatorState? state = statePPtr.TryGetAsset(stateMachine.Collection);
 					if (state is not null)
@@ -254,7 +253,7 @@ namespace AssetRipper.SourceGenerated.Extensions
 							yield return reference;
 						}
 					}
-					foreach (PPtr_Transition transition in list)
+					foreach (PPtr_AnimatorStateTransition_4_0_0 transition in list)
 					{
 						yield return transition.TryGetAsset(stateMachine.Collection);
 					}

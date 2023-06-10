@@ -6,7 +6,7 @@ using AssetRipper.Assets.Export.Dependencies;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.Export.UnityProjects.Project.Collections;
 using AssetRipper.Export.UnityProjects.Project.Exporters;
-using AssetRipper.Import.Classes;
+using AssetRipper.Import.AssetCreation;
 using AssetRipper.Import.Configuration;
 using AssetRipper.Import.Logging;
 using AssetRipper.IO.Files;
@@ -258,14 +258,14 @@ namespace AssetRipper.Export.UnityProjects.Project
 			{
 				IExportCollection collection = collections[i];
 				container.CurrentCollection = collection;
-				bool isExported = collection.Export(container, options.ProjectRootPath);
-				if (isExported)
+				if (collection is not EmptyExportCollection)
 				{
-					Logger.Info(LogCategory.ExportedFile, $"'{collection.Name}' exported");
-				}
-				else if (collection is not EmptyExportCollection)
-				{
-					Logger.Warning(LogCategory.ExportedFile, $"'{collection.Name}' failed to export");
+					Logger.Info(LogCategory.ExportProgress, $"Exporting '{collection.Name}'");
+					bool exportedSuccessfully = collection.Export(container, options.ProjectRootPath);
+					if (!exportedSuccessfully)
+					{
+						Logger.Warning(LogCategory.ExportProgress, $"Failed to export '{collection.Name}'");
+					}
 				}
 				EventExportProgressUpdated?.Invoke(i, collections.Count);
 			}

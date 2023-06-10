@@ -6,6 +6,7 @@ using AssetRipper.Assets.Metadata;
 using AssetRipper.IO.Files;
 using AssetRipper.Yaml;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace AssetRipper.Assets;
 
@@ -38,6 +39,7 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 		GUID = pathToGUID.ContainsKey(guidKey) ? UnityGUID.Parse(pathToGUID[guidKey]) : UnityGUID.NewGuid();
 	}
 
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 	private OriginalPathDetails? originalPathDetails;
 	public AssetInfo AssetInfo { get; }
 	public AssetCollection Collection => AssetInfo.Collection;

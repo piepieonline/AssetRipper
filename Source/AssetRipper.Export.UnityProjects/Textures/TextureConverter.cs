@@ -3,6 +3,7 @@ using AssetRipper.Import.Logging;
 using AssetRipper.SourceGenerated.Classes.ClassID_117;
 using AssetRipper.SourceGenerated.Classes.ClassID_187;
 using AssetRipper.SourceGenerated.Classes.ClassID_28;
+using AssetRipper.SourceGenerated.Classes.ClassID_89;
 using AssetRipper.SourceGenerated.Enums;
 using AssetRipper.SourceGenerated.Extensions;
 using AssetRipper.TextureDecoder.Astc;
@@ -41,6 +42,8 @@ namespace AssetRipper.Export.UnityProjects.Textures
 				return null;
 			}
 
+			bitmap.FlipY();
+
 			// despite the name, this packing works for different formats
 			if (texture.LightmapFormat_C117 == (int)TextureUsageMode.NormalmapDXT5nm)
 			{
@@ -58,7 +61,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 				return null;
 			}
 
-			return ConvertToBitmap(
+			DirectBitmap? bitmap = ConvertToBitmap(
 				texture.Format_C187E,
 				texture.Width_C187,
 				texture.Height_C187,
@@ -66,6 +69,15 @@ namespace AssetRipper.Export.UnityProjects.Textures
 				(int)texture.DataSize_C187,
 				texture.Collection.Version,
 				buffer);
+
+			if (bitmap == null)
+			{
+				return null;
+			}
+
+			bitmap.FlipY();
+
+			return bitmap;
 		}
 
 		public static DirectBitmap? ConvertToBitmap(ITexture2D texture)
@@ -88,6 +100,12 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			if (bitmap == null)
 			{
 				return null;
+			}
+
+			// cubemaps dont need flipping, for some reason
+			if (texture is not ICubemap)
+			{
+				bitmap.FlipY();
 			}
 
 			// despite the name, this packing works for different formats
@@ -145,7 +163,6 @@ namespace AssetRipper.Export.UnityProjects.Textures
 						return null;
 					}
 				}
-				bitmap.FlipY();
 				return bitmap;
 			}
 			catch
@@ -160,33 +177,33 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			switch (textureFormat)
 			{
 				//ASTC
-				case TextureFormat.ASTC_RGB_4x4:
-				case TextureFormat.ASTC_RGBA_4x4:
+				case TextureFormat.ASTC_RGB_4x4_48:
+				case TextureFormat.ASTC_RGBA_4x4_54:
 					AstcDecoder.DecodeASTC(inputSpan, width, height, 4, 4, outputSpan);
 					return true;
 
-				case TextureFormat.ASTC_RGB_5x5:
-				case TextureFormat.ASTC_RGBA_5x5:
+				case TextureFormat.ASTC_RGB_5x5_49:
+				case TextureFormat.ASTC_RGBA_5x5_55:
 					AstcDecoder.DecodeASTC(inputSpan, width, height, 5, 5, outputSpan);
 					return true;
 
-				case TextureFormat.ASTC_RGB_6x6:
-				case TextureFormat.ASTC_RGBA_6x6:
+				case TextureFormat.ASTC_RGB_6x6_50:
+				case TextureFormat.ASTC_RGBA_6x6_56:
 					AstcDecoder.DecodeASTC(inputSpan, width, height, 6, 6, outputSpan);
 					return true;
 
-				case TextureFormat.ASTC_RGB_8x8:
-				case TextureFormat.ASTC_RGBA_8x8:
+				case TextureFormat.ASTC_RGB_8x8_51:
+				case TextureFormat.ASTC_RGBA_8x8_57:
 					AstcDecoder.DecodeASTC(inputSpan, width, height, 8, 8, outputSpan);
 					return true;
 
-				case TextureFormat.ASTC_RGB_10x10:
-				case TextureFormat.ASTC_RGBA_10x10:
+				case TextureFormat.ASTC_RGB_10x10_52:
+				case TextureFormat.ASTC_RGBA_10x10_58:
 					AstcDecoder.DecodeASTC(inputSpan, width, height, 10, 10, outputSpan);
 					return true;
 
-				case TextureFormat.ASTC_RGB_12x12:
-				case TextureFormat.ASTC_RGBA_12x12:
+				case TextureFormat.ASTC_RGB_12x12_53:
+				case TextureFormat.ASTC_RGBA_12x12_59:
 					AstcDecoder.DecodeASTC(inputSpan, width, height, 12, 12, outputSpan);
 					return true;
 
@@ -223,7 +240,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 
 				//ETC
 				case TextureFormat.ETC_RGB4:
-				case TextureFormat.ETC_RGB4_3DS:
+				case TextureFormat.ETC_RGB4_3DS_60:
 				case TextureFormat.ETC_RGB4Crunched:
 					EtcDecoder.DecompressETC(inputSpan, width, height, outputSpan);
 					return true;
@@ -253,7 +270,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 					return true;
 
 				case TextureFormat.ETC2_RGBA8:
-				case TextureFormat.ETC_RGBA8_3DS:
+				case TextureFormat.ETC_RGBA8_3DS_61:
 				case TextureFormat.ETC2_RGBA8Crunched:
 					EtcDecoder.DecompressETC2A8(inputSpan, width, height, outputSpan);
 					return true;

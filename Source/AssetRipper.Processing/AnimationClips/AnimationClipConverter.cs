@@ -1,7 +1,9 @@
 using AssetRipper.Assets.IO.Reading;
+using AssetRipper.Assets.Metadata;
 using AssetRipper.Assets.Utils;
 using AssetRipper.Processing.AnimationClips.Editor;
 using AssetRipper.SourceGenerated;
+using AssetRipper.SourceGenerated.Classes.ClassID_115;
 using AssetRipper.SourceGenerated.Classes.ClassID_74;
 using AssetRipper.SourceGenerated.Extensions;
 using AssetRipper.SourceGenerated.Extensions.Enums.AnimationClip;
@@ -23,25 +25,21 @@ using AssetRipper.SourceGenerated.Subclasses.PPtrKeyframe;
 using AssetRipper.SourceGenerated.Subclasses.QuaternionCurve;
 using AssetRipper.SourceGenerated.Subclasses.StreamedClip;
 using AssetRipper.SourceGenerated.Subclasses.Vector3Curve;
-using System.Text.RegularExpressions;
 
 namespace AssetRipper.Processing.AnimationClips
 {
-	public sealed partial class AnimationClipConverter
+	public readonly partial struct AnimationClipConverter
 	{
-		private AnimationClipConverter(IAnimationClip clip)
+		private AnimationClipConverter(IAnimationClip clip, PathChecksumCache checksumCache)
 		{
-			if (clip == null)
-			{
-				throw new ArgumentNullException(nameof(clip));
-			}
 			m_clip = clip;
 			m_customCurveResolver = new CustomCurveResolver(clip);
+			m_checksumCache = checksumCache;
 		}
 
-		public static void Process(IAnimationClip clip, AnimationCache cache)
+		public static void Process(IAnimationClip clip, AnimationCache cache, PathChecksumCache checksumCache)
 		{
-			AnimationClipConverter converter = new AnimationClipConverter(clip);
+			AnimationClipConverter converter = new AnimationClipConverter(clip, checksumCache);
 			converter.ProcessInner(cache);
 		}
 
@@ -73,9 +71,9 @@ namespace AssetRipper.Processing.AnimationClips
 
 		private void ProcessStreams(IReadOnlyList<StreamedFrame> streamFrames, IAnimationClipBindingConstant bindings, IReadOnlyDictionary<uint, string> tos, float sampleRate)
 		{
-			float[] curveValues = new float[4];
-			float[] inSlopeValues = new float[4];
-			float[] outSlopeValues = new float[4];
+			Span<float> curveValues = stackalloc float[4] { 0, 0, 0, 0 };
+			Span<float> inSlopeValues = stackalloc float[4] { 0, 0, 0, 0 };
+			Span<float> outSlopeValues = stackalloc float[4] { 0, 0, 0, 0 };
 			float interval = 1.0f / sampleRate;
 
 			// first (index [0]) stream frame is for slope calculation for the first real frame (index [1])
@@ -116,7 +114,11 @@ namespace AssetRipper.Processing.AnimationClips
 					}
 					else if (binding.CustomType == (byte)BindingCustomType.None)
 					{
-						if (frameIndex0) { curveIndex = GetNextCurve(frame, curveIndex); continue; }
+						if (frameIndex0)
+						{
+							curveIndex = GetNextCurve(frame, curveIndex);
+							continue;
+						}
 						AddDefaultCurve(binding, path, frame.Time, frame.Curves[curveIndex].Value);
 						curveIndex = GetNextCurve(frame, curveIndex);
 					}
@@ -137,7 +139,7 @@ namespace AssetRipper.Processing.AnimationClips
 		{
 			DenseClip dense = clip.DenseClip;
 			int streamCount = (int)clip.StreamedClip.CurveCount;
-			float[] slopeValues = new float[4]; // no slopes - 0 values
+			ReadOnlySpan<float> slopeValues = stackalloc float[4] { 0, 0, 0, 0 }; // no slopes - 0 values
 			for (int frameIndex = 0; frameIndex < dense.FrameCount; frameIndex++)
 			{
 				float time = frameIndex / dense.SampleRate;
@@ -171,7 +173,7 @@ namespace AssetRipper.Processing.AnimationClips
 		{
 			int streamCount = (int)clip.StreamedClip.CurveCount;
 			int denseCount = (int)clip.DenseClip.CurveCount;
-			float[] slopeValues = new float[4]; // no slopes - 0 values
+			ReadOnlySpan<float> slopeValues = stackalloc float[4] { 0, 0, 0, 0 }; // no slopes - 0 values
 
 			// only first and last frames
 			float time = 0.0f;
@@ -223,20 +225,20 @@ namespace AssetRipper.Processing.AnimationClips
 							time = 0.0f;
 						}
 
-						CurveData curve = new CurveData(path, attribute, binding.GetClassID(), binding.Script.FileID, binding.Script.PathID);
+						CurveData curve = new CurveData(path, attribute, binding.GetClassID(), binding.Script);
 						AddPPtrKeyframe(curve, bindings, time, (int)value);
 					}
 					else if (ProcessStreams_frameIndex0)
 					{
-						CurveData curve = new CurveData(path, attribute, binding.GetClassID(), binding.Script.FileID, binding.Script.PathID);
+						CurveData curve = new CurveData(path, attribute, binding.GetClassID(), binding.Script);
 						AddFloatKeyframe(curve, time, value);
 					}
 					break;
 			}
 		}
 
-		private void AddTransformCurve(float time, TransformType transType, IReadOnlyList<float> curveValues,
-			IReadOnlyList<float> inSlopeValues, IReadOnlyList<float> outSlopeValues, int offset, string path)
+		private void AddTransformCurve(float time, TransformType transType, ReadOnlySpan<float> curveValues,
+			ReadOnlySpan<float> inSlopeValues, ReadOnlySpan<float> outSlopeValues, int offset, string path)
 		{
 			switch (transType)
 			{
@@ -432,14 +434,27 @@ namespace AssetRipper.Processing.AnimationClips
 
 		private void AddScriptCurve(IGenericBinding binding, string path, float time, float value)
 		{
-#warning TODO:
-			CurveData curve = new CurveData(path, ScriptPropertyPrefix + binding.Attribute, ClassIDType.MonoBehaviour, binding.Script.FileID, binding.Script.PathID);
+			if (binding.Script.TryGetAsset(m_clip.Collection) is IMonoScript script)
+			{
+				m_checksumCache.Add(script);
+			}
+
+			if (!m_checksumCache.TryGetPath(binding.Attribute, out string? propertyName))
+			{
+				propertyName = ScriptPropertyPrefix + binding.Attribute;
+			}
+
+			CurveData curve = new CurveData(path, propertyName, ClassIDType.MonoBehaviour, binding.Script);
+
 			AddFloatKeyframe(curve, time, value);
 		}
 
 		private void AddEngineCurve(IGenericBinding binding, string path, float time, float value)
 		{
 #warning TODO:
+			// We need a way to access unity object fields
+			// by classid.
+
 			CurveData curve = new CurveData(path, TypeTreePropertyPrefix + binding.Attribute, binding.GetClassID());
 			AddFloatKeyframe(curve, time, value);
 		}
@@ -451,16 +466,15 @@ namespace AssetRipper.Processing.AnimationClips
 			AddFloatKeyframe(curve, time, value);
 		}
 
-		private void AddFloatKeyframe(CurveData curveData, float time, float value)
+		private void AddFloatKeyframe(in CurveData curveData, float time, float value)
 		{
 			if (!m_floats.TryGetValue(curveData, out IFloatCurve? curve))
 			{
 				curve = m_clip.FloatCurves_C74.AddNew();
-				curve.Path.String = curveData.path;
-				curve.Attribute.String = curveData.attribute;
-				curve.ClassID = (int)curveData.classId;
-				curve.Script.FileID = curveData.fileId;
-				curve.Script.PathID = curveData.pathId;
+				curve.Path.String = curveData.Path;
+				curve.Attribute.String = curveData.Attribute;
+				curve.ClassID = (int)curveData.ClassID;
+				curve.Script.CopyValues(curveData.Script);
 				curve.Curve.SetDefaultRotationOrderAndCurveLoopType();
 				m_floats.Add(curveData, curve);
 			}
@@ -469,7 +483,7 @@ namespace AssetRipper.Processing.AnimationClips
 			floatKey.SetValues(Version, time, value, DefaultFloatWeight);
 		}
 
-		private void AddPPtrKeyframe(CurveData curveData, IAnimationClipBindingConstant bindings, float time, int index)
+		private void AddPPtrKeyframe(in CurveData curveData, IAnimationClipBindingConstant bindings, float time, int index)
 		{
 			if (!m_pptrs.TryGetValue(curveData, out IPPtrCurve? curve))
 			{
@@ -478,11 +492,10 @@ namespace AssetRipper.Processing.AnimationClips
 					return;
 				}
 				curve = m_clip.PPtrCurves_C74.AddNew();
-				curve.Path.String = curveData.path;
-				curve.Attribute.String = curveData.attribute;
-				curve.ClassID = (int)curveData.classId;
-				curve.Script.FileID = curveData.fileId;
-				curve.Script.PathID = curveData.pathId;
+				curve.Path.String = curveData.Path;
+				curve.Attribute.String = curveData.Attribute;
+				curve.ClassID = (int)curveData.ClassID;
+				curve.Script.CopyValues(curveData.Script);
 				m_pptrs.Add(curveData, curve);
 			}
 
@@ -554,8 +567,6 @@ namespace AssetRipper.Processing.AnimationClips
 
 		private UnityVersion Version => m_clip.Collection.Version;
 
-		public static readonly Regex UnknownPathRegex = new Regex($@"^{UnknownPathPrefix}[0-9]{{1,10}}$", RegexOptions.Compiled);
-
 		private const string UnknownPathPrefix = "path_";
 		private const string MissedPropertyPrefix = "missed_";
 		private const string ScriptPropertyPrefix = "script_";
@@ -566,6 +577,15 @@ namespace AssetRipper.Processing.AnimationClips
 		/// </summary>
 		private const float FrameIndex0Time = float.MinValue;
 
+		/// <summary>
+		/// The default weight for a keyframe.
+		/// </summary>
+		/// <remarks>
+		/// The default Vector3 is 1/3, 1/3, 1/3
+		/// The default Quaternion is 1/3, 1/3, 1/3, 1/3
+		/// </remarks>
+		private const float DefaultFloatWeight = 1.0f / 3.0f;
+
 		private readonly Dictionary<string, IVector3Curve> m_translations = new();
 		private readonly Dictionary<string, IQuaternionCurve> m_rotations = new();
 		private readonly Dictionary<string, IVector3Curve> m_scales = new();
@@ -573,8 +593,8 @@ namespace AssetRipper.Processing.AnimationClips
 		private readonly Dictionary<CurveData, IFloatCurve> m_floats = new();
 		private readonly Dictionary<CurveData, IPPtrCurve> m_pptrs = new();
 
+		private readonly PathChecksumCache m_checksumCache;
 		private readonly IAnimationClip m_clip;
 		private readonly CustomCurveResolver m_customCurveResolver;
-		private const float DefaultFloatWeight = 1.0f / 3.0f;
 	}
 }
