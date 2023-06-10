@@ -181,9 +181,4 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 			return string.IsNullOrEmpty(result) ? null : result;
 		}
 	}
-
-	public static explicit operator UnityObjectBase(UnityGUID v)
-	{
-		throw new NotImplementedException();
-	}
 }
