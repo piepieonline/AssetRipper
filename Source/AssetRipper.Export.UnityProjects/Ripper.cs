@@ -45,6 +45,7 @@ using AssetRipper.SourceGenerated.Classes.ClassID_213;
 using AssetRipper.SourceGenerated.Classes.ClassID_238;
 using AssetRipper.SourceGenerated.Classes.ClassID_240;
 using AssetRipper.SourceGenerated.Classes.ClassID_244;
+using AssetRipper.SourceGenerated.Classes.ClassID_27;
 using AssetRipper.SourceGenerated.Classes.ClassID_272;
 using AssetRipper.SourceGenerated.Classes.ClassID_273;
 using AssetRipper.SourceGenerated.Classes.ClassID_28;
@@ -235,9 +236,6 @@ namespace AssetRipper.Export.UnityProjects
 
 			//Miscellaneous exporters
 			projectExporter.OverrideExporter<ITextAsset>(new TextAssetExporter(Settings));
-			FontAssetExporter fontAssetExporter = new FontAssetExporter();
-			projectExporter.OverrideExporter<IFont>(fontAssetExporter);
-			projectExporter.OverrideExporter<IMaterial>(fontAssetExporter);
 			projectExporter.OverrideExporter<IMovieTexture>(new MovieTextureAssetExporter());
 			VideoClipExporter videoClipExporter = new();
 			projectExporter.OverrideExporter<SourceGenerated.Classes.ClassID_327.IVideoClip>(videoClipExporter);
@@ -247,12 +245,28 @@ namespace AssetRipper.Export.UnityProjects
 			TextureAssetExporter textureExporter = new(Settings);
 			projectExporter.OverrideExporter<ITexture2D>(textureExporter); //Texture2D and Cubemap
 			projectExporter.OverrideExporter<ISprite>(textureExporter);
+			projectExporter.OverrideExporter<SpriteInformationObject>(textureExporter);
 			if (Settings.SpriteExportMode == SpriteExportMode.Yaml)
 			{
 				YamlSpriteExporter spriteExporter = new();
 				projectExporter.OverrideExporter<ISprite>(spriteExporter);
 				projectExporter.OverrideExporter<ISpriteAtlas>(spriteExporter);
 			}
+
+			//Texture Array exporters
+			if (Settings.Version.IsGreaterEqual(2020, 2))
+			{
+				TextureArrayAssetExporter textureArrayExporter = new(Settings);
+				projectExporter.OverrideExporter<ICubemapArray>(textureArrayExporter);
+				projectExporter.OverrideExporter<ITexture2DArray>(textureArrayExporter);
+				projectExporter.OverrideExporter<ITexture3D>(textureArrayExporter);
+			}
+
+			//Font exporter
+			FontAssetExporter fontAssetExporter = new FontAssetExporter();
+			projectExporter.OverrideExporter<IFont>(fontAssetExporter);
+			projectExporter.OverrideExporter<IMaterial>(fontAssetExporter);
+			projectExporter.OverrideExporter<ITexture>(fontAssetExporter);
 
 			//Shader exporters
 			projectExporter.OverrideExporter<IShader>(Settings.ShaderExportMode switch

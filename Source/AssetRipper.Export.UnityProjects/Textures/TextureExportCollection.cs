@@ -4,6 +4,7 @@ using AssetRipper.Assets.Generics;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.Export.UnityProjects.Configuration;
 using AssetRipper.Export.UnityProjects.Project.Collections;
+using AssetRipper.Processing.Textures;
 using AssetRipper.SourceGenerated;
 using AssetRipper.SourceGenerated.Classes.ClassID_1006;
 using AssetRipper.SourceGenerated.Classes.ClassID_213;
@@ -19,27 +20,19 @@ namespace AssetRipper.Export.UnityProjects.Textures
 {
 	public class TextureExportCollection : AssetsExportCollection
 	{
-		public TextureExportCollection(TextureAssetExporter assetExporter, ITexture2D texture, bool exportSprites) : base(assetExporter, texture)
+		public TextureExportCollection(TextureAssetExporter assetExporter, SpriteInformationObject spriteInformationObject, bool exportSprites)
+			: base(assetExporter, spriteInformationObject.Texture)
 		{
 			m_exportSprites = exportSprites;
 
-			if (exportSprites && texture.SpriteInformation != null)
+			if (exportSprites && spriteInformationObject.Sprites.Count > 0)
 			{
-				foreach ((ISprite? sprite, ISpriteAtlas? _) in texture.SpriteInformation)
+				foreach ((ISprite? sprite, ISpriteAtlas? _) in spriteInformationObject.Sprites)
 				{
-					Debug.Assert(sprite.RD_C213.Texture.IsAsset(sprite.Collection, texture));
+					Debug.Assert(sprite.TryGetTexture() == Asset);
 					AddAsset(sprite);
 				}
 			}
-		}
-
-		public static IExportCollection CreateExportCollection(TextureAssetExporter assetExporter, ISprite asset)
-		{
-			if (asset.RD_C213.Texture.TryGetAsset(asset.Collection, out ITexture2D? texture))
-			{
-				return new TextureExportCollection(assetExporter, texture, true);
-			}
-			return new FailExportCollection(assetExporter, asset);
 		}
 
 		protected override IUnityObjectBase CreateImporter(IExportContainer container)
@@ -48,7 +41,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			if (m_convert)
 			{
 				ITextureImporter importer = ImporterFactory.GenerateTextureImporter(container, texture);
-				AddSprites(importer, texture.SpriteInformation);
+				AddSprites(importer, ((SpriteInformationObject?)Asset.MainAsset)!.Sprites);
 				return importer;
 			}
 			else
@@ -78,7 +71,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			return exportID;
 		}
 
-		private void AddSprites(ITextureImporter importer, Dictionary<ISprite, ISpriteAtlas?>? textureSpriteInformation)
+		private void AddSprites(ITextureImporter importer, IReadOnlyDictionary<ISprite, ISpriteAtlas?>? textureSpriteInformation)
 		{
 			if (textureSpriteInformation == null || textureSpriteInformation.Count == 0)
 			{
@@ -146,7 +139,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			}
 		}
 
-		private static void AddSpriteSheet(ITextureImporter importer, Dictionary<ISprite, ISpriteAtlas?> textureSpriteInformation)
+		private static void AddSpriteSheet(ITextureImporter importer, IReadOnlyDictionary<ISprite, ISpriteAtlas?> textureSpriteInformation)
 		{
 			if (!importer.Has_SpriteSheet_C1006())
 			{
@@ -173,7 +166,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			}
 		}
 
-		private void AddIDToName(ITextureImporter importer, Dictionary<ISprite, ISpriteAtlas?> textureSpriteInformation)
+		private void AddIDToName(ITextureImporter importer, IReadOnlyDictionary<ISprite, ISpriteAtlas?> textureSpriteInformation)
 		{
 			if (importer.SpriteMode_C1006E == SpriteImportMode.Multiple)
 			{
