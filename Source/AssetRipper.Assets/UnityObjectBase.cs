@@ -16,7 +16,8 @@ namespace AssetRipper.Assets;
 public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 {
 	public static Dictionary<string, string> pathToGUID = null;
-
+	public static Dictionary<AssetInfo, long> assetInfoToFileID = new Dictionary<AssetInfo, long>();
+	
 	protected UnityObjectBase(AssetInfo assetInfo)
 	{
 		if (pathToGUID == null)
@@ -38,13 +39,17 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 
 		AssetInfo = assetInfo;
 
-
 		if (Collection.Name == "resources.assets" && PathID != 0)
 		{
 			var guidKey = $"{Collection.Name}-{PathID}";
 			if (pathToGUID.ContainsKey(guidKey))
 			{
 				GUID = UnityGUID.Parse(pathToGUID[guidKey]);
+
+				if(pathToGUID.ContainsKey(guidKey + "-FileID"))
+				{
+					assetInfoToFileID[assetInfo] = long.Parse(pathToGUID[guidKey + "-FileID"]);
+				}
 			}
 			else
 			{

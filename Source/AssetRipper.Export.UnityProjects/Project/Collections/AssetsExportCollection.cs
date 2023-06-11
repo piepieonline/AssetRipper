@@ -3,6 +3,7 @@ using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Export;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.Export.UnityProjects.Project.Exporters;
+using AssetRipper.SourceGenerated.Extensions;
 using System.Diagnostics;
 
 namespace AssetRipper.Export.UnityProjects.Project.Collections
@@ -63,7 +64,16 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 		protected bool AddAsset(IUnityObjectBase asset)
 		{
 			Debug.Assert(asset != Asset);
-			long exportID = GenerateExportID(asset);
+			long exportID;
+			if (UnityObjectBase.assetInfoToFileID.ContainsKey(asset.AssetInfo))
+			{
+				exportID = UnityObjectBase.assetInfoToFileID[asset.AssetInfo];
+				UnityObjectBase.assetInfoToFileID.RemoveAll(kv => kv.Value == exportID);
+			}
+			else
+			{
+				exportID = GenerateExportID(asset);
+			}
 			if (m_exportIDs.TryAdd(asset, exportID))
 			{
 				m_exportAssetIds.Add(exportID);
@@ -77,7 +87,7 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 
 		private bool ContainsID(long id)
 		{
-			return m_exportAssetIds.Contains(id);
+			return m_exportAssetIds.Contains(id) || UnityObjectBase.assetInfoToFileID.ContainsValue(id);
 		}
 
 		public override AssetCollection File => m_file;
