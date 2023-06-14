@@ -1,4 +1,6 @@
-﻿namespace AssetRipper.IO.Endian;
+﻿using AssetRipper.Primitives;
+
+namespace AssetRipper.IO.Endian;
 
 public partial struct EndianSpanReader
 {
@@ -59,20 +61,12 @@ public partial struct EndianSpanReader
 		return count;
 	}
 
-	public byte[] ReadBytesExact(int count)
+	public ReadOnlySpan<byte> ReadBytesExact(int count)
 	{
 		ThrowIfNegative(count);
-
-		if (count == 0)
-		{
-			return Array.Empty<byte>();
-		}
-
 		ReadOnlySpan<byte> sliced = data.Slice(Position, count);
-		byte[] result = new byte[count];
-		sliced.CopyTo(result);
 		Position += count;
-		return result;
+		return sliced;
 	}
 
 	public void ReadBytesExact(Span<byte> buffer)
@@ -100,7 +94,7 @@ public partial struct EndianSpanReader
 	public Utf8String ReadUtf8String()
 	{
 		int length = ReadInt32();
-		byte[] byteArray = ReadBytesExact(length);
+		ReadOnlySpan<byte> byteArray = ReadBytesExact(length);
 		return new Utf8String(byteArray);
 	}
 
@@ -115,7 +109,7 @@ public partial struct EndianSpanReader
 	public Utf8String ReadNullTerminatedString()
 	{
 		int length = data.Slice(Position).IndexOf((byte)'\0');
-		byte[] byteArray = ReadBytesExact(length);
+		ReadOnlySpan<byte> byteArray = ReadBytesExact(length);
 		Position += 1;
 		return new Utf8String(byteArray);
 	}

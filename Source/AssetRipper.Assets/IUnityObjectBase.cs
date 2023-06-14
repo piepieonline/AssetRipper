@@ -5,6 +5,7 @@ using AssetRipper.Assets.IO.Reading;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.IO.Endian;
 using AssetRipper.IO.Files;
+using AssetRipper.Primitives;
 using AssetRipper.Yaml;
 
 namespace AssetRipper.Assets;
@@ -26,6 +27,7 @@ public interface IUnityObjectBase : IUnityAssetBase
 
 	YamlDocument ExportYamlDocument(IExportContainer container);
 	IEnumerable<(FieldName, PPtr<IUnityObjectBase>)> FetchDependencies();
+	string GetBestName();
 }
 public static class UnityObjectBaseExtensions
 {

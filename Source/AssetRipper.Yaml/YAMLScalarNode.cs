@@ -1,11 +1,12 @@
 ﻿//#define USE_HEX_FLOAT
+using AssetRipper.Primitives;
 using AssetRipper.Yaml.Extensions;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace AssetRipper.Yaml
 {
-	public sealed class YamlScalarNode : YamlNode
+	public sealed partial class YamlScalarNode : YamlNode
 	{
 		public YamlScalarNode() { }
 
@@ -107,6 +108,10 @@ namespace AssetRipper.Yaml
 		{
 			SetValue(value);
 			Style = ScalarStyle.Plain;
+		}
+
+		public YamlScalarNode(Utf8String value) : this(value.String)
+		{
 		}
 
 		public void SetValue(bool value)
@@ -331,15 +336,13 @@ namespace AssetRipper.Yaml
 
 		private static ScalarStyle GetStringStyle(string value)
 		{
-			if (!string.IsNullOrEmpty(value) && s_illegal.IsMatch(value))
+			if (!string.IsNullOrEmpty(value) && IllegalStringsRegex().IsMatch(value))
 			{
 				return value.Contains("\n ") ? ScalarStyle.DoubleQuoted : ScalarStyle.SingleQuoted;
 			}
 
 			return ScalarStyle.Plain;
 		}
-
-		public static YamlScalarNode Empty { get; } = new YamlScalarNode();
 
 		public override YamlNodeType NodeType => YamlNodeType.Scalar;
 		public override bool IsMultiline => false;
@@ -387,10 +390,11 @@ namespace AssetRipper.Yaml
 		}
 		public ScalarStyle Style { get; }
 
-		private static readonly Regex s_illegal = new("(^\\s)|(^-\\s)|(^-$)|(^[\\:\\[\\]'\"*&!@#%{}?<>,\\`])|([:@]\\s)|([\\n\\r])|([:\\s]$)", RegexOptions.Compiled);
-
 		private ScalarType m_objectType = ScalarType.String;
 		private string m_string = string.Empty;
 		private ulong m_value = 0;
+
+		[GeneratedRegex("(^\\s)|(^-\\s)|(^-$)|(^[\\:\\[\\]'\"*&!@#%{}?<>,\\`])|([:@]\\s)|([\\n\\r])|([:\\s]$)", RegexOptions.Compiled)]
+		private static partial Regex IllegalStringsRegex();
 	}
 }

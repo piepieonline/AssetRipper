@@ -7,6 +7,7 @@ using AssetRipper.Export.UnityProjects.Project.Exporters;
 using AssetRipper.Import.Logging;
 using AssetRipper.IO.Files;
 using AssetRipper.IO.Files.SerializedFiles;
+using AssetRipper.Primitives;
 
 namespace AssetRipper.Export.UnityProjects.Project.Collections
 {
@@ -62,7 +63,7 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 		{
 			get { yield return m_asset; }
 		}
-		public string Name => m_asset is IHasNameString namedAsset ? namedAsset.GetNameNotEmpty() : m_asset.ClassName;
+		public string Name => m_asset.GetBestName();
 
 		private readonly IUnityObjectBase m_asset;
 	}

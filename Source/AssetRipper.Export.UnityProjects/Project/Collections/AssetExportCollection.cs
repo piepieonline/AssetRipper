@@ -1,7 +1,6 @@
 using AssetRipper.Assets;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Export;
-using AssetRipper.Assets.Interfaces;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.Export.UnityProjects.Project.Exporters;
 using AssetRipper.IO.Files.Utils;
@@ -21,14 +20,9 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 		{
 			string subPath;
 			string fileName;
-			if (Asset.OriginalName is not null)
+			if (Asset.OriginalName is not null || Asset.OriginalDirectory is not null)
 			{
-				string? deserializedName = (Asset as IHasNameString)?.NameString;
-				string assetName = !string.IsNullOrEmpty(deserializedName)
-					? deserializedName
-					: Asset.OriginalName.Length > 0
-						? Asset.OriginalName
-						: Asset.ClassName;
+				string assetName = Asset.GetBestName();
 				string resourcePath = Path.Combine(projectDirectory, DirectoryUtils.FixInvalidPathCharacters(
 					Path.Combine(Asset.OriginalDirectory ?? "", $"{assetName}.{GetExportExtension(Asset)}")));
 				subPath = Path.GetDirectoryName(resourcePath)!;
@@ -39,7 +33,7 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 			{
 				string subFolder = Path.Combine(AssetsKeyword, Asset.ClassName);
 				subPath = Path.Combine(projectDirectory, subFolder);
-				fileName = GetUniqueFileName(container.File, Asset, subPath);
+				fileName = GetUniqueFileName(Asset, subPath);
 			}
 
 			Directory.CreateDirectory(subPath);
@@ -95,7 +89,7 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 			importer.MainObjectFileID_C1034 = GetExportID(Asset);
 			if (importer.Has_AssetBundleName_C1034() && Asset.AssetBundleName is not null)
 			{
-				importer.AssetBundleName_C1034.String = Asset.AssetBundleName;
+				importer.AssetBundleName_C1034 = Asset.AssetBundleName;
 			}
 			return importer;
 		}
@@ -106,20 +100,7 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 		{
 			get { yield return Asset; }
 		}
-		public override string Name
-		{
-			get
-			{
-				if (Asset is IHasNameString hasName)
-				{
-					return hasName.GetNameNotEmpty();
-				}
-				else
-				{
-					return Asset.ClassName;
-				}
-			}
-		}
+		public override string Name => Asset.GetBestName();
 		public IUnityObjectBase Asset { get; }
 	}
 }
