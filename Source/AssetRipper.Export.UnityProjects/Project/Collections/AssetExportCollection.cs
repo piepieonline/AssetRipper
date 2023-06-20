@@ -18,23 +18,10 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 
 		public override bool Export(IExportContainer container, string projectDirectory)
 		{
-			string subPath;
-			string fileName;
-			if (Asset.OriginalName is not null || Asset.OriginalDirectory is not null)
-			{
-				string assetName = Asset.GetBestName();
-				string resourcePath = Path.Combine(projectDirectory, DirectoryUtils.FixInvalidPathCharacters(
-					Path.Combine(Asset.OriginalDirectory ?? "", $"{assetName}.{GetExportExtension(Asset)}")));
-				subPath = Path.GetDirectoryName(resourcePath)!;
-				string resFileName = Path.GetFileName(resourcePath);
-				fileName = GetUniqueFileName(subPath, resFileName);
-			}
-			else
-			{
-				string subFolder = Path.Combine(AssetsKeyword, Asset.ClassName);
-				subPath = Path.Combine(projectDirectory, subFolder);
-				fileName = GetUniqueFileName(Asset, subPath);
-			}
+			string subPath = Asset.OriginalName is not null || Asset.OriginalDirectory is not null
+				? Path.Combine(projectDirectory, DirectoryUtils.FixInvalidPathCharacters(Asset.OriginalDirectory ?? ""))
+				: Path.Combine(projectDirectory, AssetsKeyword, Asset.ClassName);
+			string fileName = GetUniqueFileName(Asset, subPath);
 
 			Directory.CreateDirectory(subPath);
 
@@ -85,7 +72,7 @@ namespace AssetRipper.Export.UnityProjects.Project.Collections
 
 		protected virtual IUnityObjectBase CreateImporter(IExportContainer container)
 		{
-			INativeFormatImporter importer = NativeFormatImporterFactory.CreateAsset(container.ExportVersion, container.File);
+			INativeFormatImporter importer = NativeFormatImporterFactory.CreateAsset(container.File, container.ExportVersion);
 			importer.MainObjectFileID_C1034 = GetExportID(Asset);
 			if (importer.Has_AssetBundleName_C1034() && Asset.AssetBundleName is not null)
 			{
