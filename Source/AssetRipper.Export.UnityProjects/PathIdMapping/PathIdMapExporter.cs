@@ -7,6 +7,8 @@ using AssetRipper.SourceGenerated.Classes.ClassID_43;
 using AssetRipper.SourceGenerated.Classes.ClassID_49;
 using AssetRipper.SourceGenerated.Classes.ClassID_83;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace AssetRipper.Export.UnityProjects.PathIdMapping;
 
@@ -39,9 +41,16 @@ public sealed class PathIdMapExporter : IPostExporter
 		}
 
 		string outputDirectory = ripper.Settings.AuxiliaryFilesPath;
+		
 		Directory.CreateDirectory(outputDirectory);
-		using FileStream stream = File.Create(Path.Combine(outputDirectory, "path_id_map.json"));
-		JsonSerializer.Serialize(stream, gameInfo, SerializedGameInfoSerializerContext.Default.SerializedGameInfo);
-		stream.Flush();
+		using FileStream pathIdMapStream = File.Create(Path.Combine(outputDirectory, "path_id_map.json"));
+		JsonSerializer.Serialize(pathIdMapStream, gameInfo, SerializedGameInfoSerializerContext.Default.SerializedGameInfo);
+		pathIdMapStream.Flush();
+
+		var options = new JsonSerializerOptions(JsonSerializerDefaults.General);
+		// JsonSerializerContext context = JsonSerializerContext.
+		// JsonTypeInfo<Dictionary<string, string>> typeInfo = new JsonTypeInfo<Dictionary<string, string>>();
+		// JsonConvert.SerializeObject();
+		File.WriteAllText(Path.Combine(outputDirectory, "current_paths_new.json"), JsonSerializer.Serialize(UnityObjectBase.pathToGUID, options));
 	}
 }

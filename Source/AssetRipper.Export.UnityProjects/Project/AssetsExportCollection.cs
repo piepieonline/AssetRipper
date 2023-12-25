@@ -2,6 +2,7 @@ using AssetRipper.Assets;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Export;
 using AssetRipper.Assets.Metadata;
+using AssetRipper.SourceGenerated.Extensions;
 using System.Diagnostics;
 
 namespace AssetRipper.Export.UnityProjects.Project
@@ -61,7 +62,6 @@ namespace AssetRipper.Export.UnityProjects.Project
 		/// <returns><see langword="true"/> if the <paramref name="asset"/> is added to the <see cref="AssetsExportCollection"/> object; <see langword="false"/> if the <paramref name="asset"/> is already present.</returns>
 		protected bool AddAsset(IUnityObjectBase asset)
 		{
-			Debug.Assert(asset != Asset);
 			long exportID;
 			if (UnityObjectBase.assetInfoToFileID.ContainsKey(asset.AssetInfo))
 			{

@@ -25,7 +25,7 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 		{
 			try
 			{
-				pathToGUID = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Join(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "..", "/currentPaths.json")));
+				pathToGUID = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Join(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "..", "/current_paths.json")));
 			}
 			catch
 			{
@@ -34,18 +34,27 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 				Console.ForegroundColor = ConsoleColor.Red;
 				Console.WriteLine($"WARNING: No existing GUIDs found, this will break things. Abort? (y/n)");
 				Console.ForegroundColor = preColor;
-				if (Console.ReadLine() != "n") throw new Exception("Missing currentPaths.json");
+				if (Console.ReadLine() != "n") throw new Exception("Missing current_paths.json");
 			}
 		}
 
 		AssetInfo = assetInfo;
 
-		if (Collection.Name == "resources.assets" && PathID != 0)
+		if (PathID != 0)
 		{
-			var guidKey = $"{Collection.Name}-{PathID}";
+			string guidKey;
+			if (Collection.Name.StartsWith("cab"))
+			{
+				guidKey = $"addressables-{PathID}";
+			}
+			else
+			{
+				guidKey = $"{Collection.Name}-{PathID}";
+			}
+			
 			if (pathToGUID.ContainsKey(guidKey))
 			{
-				GUID = UnityGUID.Parse(pathToGUID[guidKey]);
+				GUID = UnityGuid.Parse(pathToGUID[guidKey]);
 
 				if(pathToGUID.ContainsKey(guidKey + "-FileID"))
 				{
@@ -58,12 +67,15 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 				Console.ForegroundColor = ConsoleColor.Yellow;
 				Console.WriteLine($"MISSING GUID: Generating GUID for {guidKey}");
 				Console.ForegroundColor = preColor;
-				GUID = UnityGUID.NewGuid();
+				// For addressables, predictable GUIDS
+				// Otherwise, random at generation time
+				GUID = guidKey.StartsWith("addressables") ? UnityGuid.Md5Hash(guidKey) : UnityGuid.NewGuid();
+				pathToGUID[guidKey] = GUID.ToString();
 			}
 		}
 		else
 		{
-			GUID = UnityGUID.NewGuid();
+			GUID = UnityGuid.NewGuid();
 		}
 	}
 
@@ -74,7 +86,7 @@ public abstract class UnityObjectBase : UnityAssetBase, IUnityObjectBase
 	public int ClassID => AssetInfo.ClassID;
 	public long PathID => AssetInfo.PathID;
 	public virtual string ClassName => GetType().Name;
-	public UnityGUID GUID { get; set; }
+	public UnityGuid GUID { get; set; }
 	public IUnityObjectBase? MainAsset { get; set; }
 
 	public YamlDocument ExportYamlDocument(IExportContainer container)

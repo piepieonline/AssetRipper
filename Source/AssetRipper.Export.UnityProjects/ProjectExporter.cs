@@ -264,10 +264,10 @@ namespace AssetRipper.Export.UnityProjects
 				container.CurrentCollection = collection;
 				if (collection is not EmptyExportCollection)
 				{
-					if(collection is PrefabExportCollection && ((AssetExportCollection)collection).Asset is UnityObjectBase)
+					if(collection is PrefabExportCollection && ((PrefabExportCollection)collection).Asset is UnityObjectBase)
 					{
-						((UnityObjectBase)((AssetExportCollection)collection).Asset).GUID = ((UnityObjectBase)((PrefabExportCollection)collection).RootGameObject).GUID;
-						Logger.Info(LogCategory.ExportProgress, $"Exporting '{collection.Name}' with the child GUID '{((UnityObjectBase)((AssetExportCollection)collection).Asset).GUID}'");
+						((UnityObjectBase)((PrefabExportCollection)collection).Asset).GUID = ((UnityObjectBase)((PrefabExportCollection)collection).RootGameObject).GUID;
+						Logger.Info(LogCategory.ExportProgress, $"Exporting '{collection.Name}' with the child GUID '{((UnityObjectBase)((PrefabExportCollection)collection).Asset).GUID}'");
 					}
 					else
 					{
