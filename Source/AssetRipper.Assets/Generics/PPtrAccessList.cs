@@ -30,11 +30,12 @@ namespace AssetRipper.Assets.Generics
 		{
 			get
 			{
-				return list[index].TryGetAsset(file);
+				list[index].TryGetAsset(file, out TTarget? result);
+				return result;
 			}
 			set
 			{
-				list[index].CopyValues(file.ForceCreatePPtr(value));
+				list[index].SetAsset(file, value);
 			}
 		}
 
@@ -121,7 +122,6 @@ namespace AssetRipper.Assets.Generics
 
 			protected override bool IsCompatibleBundle(Bundle bundle) => false;
 			protected override bool IsCompatibleCollection(AssetCollection collection) => collection is EmptyAssetCollection;
-			public override AssetCollection? ResolveCollection(string name) => null;
 
 			private sealed class EmptyAssetCollection : AssetCollection
 			{

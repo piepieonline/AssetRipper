@@ -1,13 +1,13 @@
 ﻿using AssetRipper.Assets;
 using AssetRipper.Assets.Export;
-using AssetRipper.Export.UnityProjects.Project.Collections;
 using AssetRipper.Export.UnityProjects.Utils;
+using AssetRipper.SourceGenerated.Classes.ClassID_48;
 
 namespace AssetRipper.Export.UnityProjects.Shaders
 {
-	public sealed class YamlShaderExportCollection : AssetExportCollection
+	public sealed class YamlShaderExportCollection : AssetExportCollection<IShader>
 	{
-		public YamlShaderExportCollection(YamlShaderExporter assetExporter, IUnityObjectBase asset) : base(assetExporter, asset)
+		public YamlShaderExportCollection(YamlShaderExporter assetExporter, IShader asset) : base(assetExporter, asset)
 		{
 		}
 

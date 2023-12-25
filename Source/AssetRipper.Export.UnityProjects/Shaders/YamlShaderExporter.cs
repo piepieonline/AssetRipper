@@ -1,7 +1,7 @@
 ﻿using AssetRipper.Assets;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Export;
-using AssetRipper.Export.UnityProjects.Project.Exporters;
+using AssetRipper.Export.UnityProjects.Project;
 using AssetRipper.SourceGenerated.Classes.ClassID_48;
 
 namespace AssetRipper.Export.UnityProjects.Shaders
@@ -15,7 +15,7 @@ namespace AssetRipper.Export.UnityProjects.Shaders
 		{
 			exportCollection = asset switch
 			{
-				IShader => new YamlShaderExportCollection(this, asset),
+				IShader shader => new YamlShaderExportCollection(this, shader),
 				_ => null,
 			};
 			return exportCollection is not null;

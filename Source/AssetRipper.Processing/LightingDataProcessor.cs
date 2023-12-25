@@ -1,5 +1,4 @@
 ﻿using AssetRipper.Assets;
-using AssetRipper.Assets.Bundles;
 using AssetRipper.Assets.Cloning;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Generics;
@@ -15,7 +14,6 @@ using AssetRipper.SourceGenerated.Classes.ClassID_25;
 using AssetRipper.SourceGenerated.Classes.ClassID_258;
 using AssetRipper.SourceGenerated.Classes.ClassID_28;
 using AssetRipper.SourceGenerated.Extensions;
-using AssetRipper.SourceGenerated.MarkerInterfaces;
 using AssetRipper.SourceGenerated.Subclasses.LightmapData;
 using AssetRipper.SourceGenerated.Subclasses.RendererData;
 using AssetRipper.SourceGenerated.Subclasses.SceneObjectIdentifier;
@@ -24,15 +22,20 @@ namespace AssetRipper.Processing
 {
 	public class LightingDataProcessor : IAssetProcessor
 	{
-		public void Process(GameBundle gameBundle, UnityVersion projectVersion)
+		/// <summary>
+		/// The default name of newly created <see cref="ILightingDataAsset"/>s.
+		/// </summary>
+		private static Utf8String LightingDataName { get; } = new("LightingData");
+
+		public void Process(GameData gameData)
 		{
 			Logger.Info(LogCategory.Processing, "Lighting Data Assets");
-			ProcessedAssetCollection processedCollection = gameBundle.AddNewProcessedCollection("Generated Lighting Data Assets", projectVersion);
+			ProcessedAssetCollection processedCollection = gameData.AddNewProcessedCollection("Generated Lighting Data Assets");
 
 			Dictionary<ILightmapSettings, SceneDefinition> lightmapSettingsDictionary = new();
-			Dictionary<ILightProbesMarker, SceneDefinition?> lightProbeDictionary = new();
+			Dictionary<ILightProbes, SceneDefinition?> lightProbeDictionary = new();
 
-			foreach (SceneDefinition scene in gameBundle.Scenes)
+			foreach (SceneDefinition scene in gameData.GameBundle.Scenes)
 			{
 				//Only scenes can contain a LightmapSettings asset.
 				ILightmapSettings? lightmapSettings = scene.Assets.OfType<ILightmapSettings>().FirstOrDefault();
@@ -85,12 +88,12 @@ namespace AssetRipper.Processing
 
 			foreach ((ILightmapSettings lightmapSettings, SceneDefinition scene) in lightmapSettingsDictionary)
 			{
-				ILightProbesMarker? lightProbes = lightmapSettings.LightProbes_C157P;
+				ILightProbes? lightProbes = lightmapSettings.LightProbes_C157P;
 				if (lightProbes is not null && lightProbeDictionary[lightProbes] is null)
 				{
 					lightProbes = null;//Shared light probes should not have their path set.
 				}
-				SetPaths(lightmapSettings, lightProbes, scene);
+				SetPathsAndMainAsset(lightmapSettings, lightProbes, scene);
 			}
 		}
 
@@ -173,7 +176,7 @@ namespace AssetRipper.Processing
 			}
 		}
 
-		private static void SetPaths(ILightmapSettings lightmapSettings, ILightProbesMarker? lightProbes, SceneDefinition scene)
+		private static void SetPathsAndMainAsset(ILightmapSettings lightmapSettings, ILightProbes? lightProbes, SceneDefinition scene)
 		{
 			//Several assets should all be exported in a subfolder beside the scene.
 			//Example:
@@ -187,10 +190,12 @@ namespace AssetRipper.Processing
 			ILightingDataAsset? lightingDataAsset = lightmapSettings.LightingDataAsset_C157P;
 			if (lightingDataAsset is not null)
 			{
+				lightingDataAsset.MainAsset = lightingDataAsset;
+
 				lightingDataAsset.OriginalDirectory ??= scene.Path;
 				if (lightingDataAsset.Name.IsEmpty)
 				{
-					lightingDataAsset.Name = "LightingData"u8;
+					lightingDataAsset.Name = LightingDataName;
 				}
 
 				//This OriginalName is purely for the UI. Name is used for exporting the asset.
@@ -209,18 +214,22 @@ namespace AssetRipper.Processing
 				if (lightmapData.DirLightmap?.TryGetAsset(lightmapSettings.Collection, out ITexture2D? dirLightmap) ?? false)
 				{
 					dirLightmap.OriginalDirectory ??= scene.Path;
+					dirLightmap.MainAsset = lightingDataAsset;
 				}
 				if (lightmapData.IndirectLightmap?.TryGetAsset(lightmapSettings.Collection, out ITexture2D? indirectLightmap) ?? false)
 				{
 					indirectLightmap.OriginalDirectory ??= scene.Path;
+					indirectLightmap.MainAsset = lightingDataAsset;
 				}
 				if (lightmapData.Lightmap.TryGetAsset(lightmapSettings.Collection, out ITexture2D? lightmap))
 				{
 					lightmap.OriginalDirectory ??= scene.Path;
+					lightmap.MainAsset = lightingDataAsset;
 				}
 				if (lightmapData.ShadowMask?.TryGetAsset(lightmapSettings.Collection, out ITexture2D? shadowMask) ?? false)
 				{
 					shadowMask.OriginalDirectory ??= scene.Path;
+					shadowMask.MainAsset = lightingDataAsset;
 				}
 			}
 		}
@@ -285,12 +294,12 @@ namespace AssetRipper.Processing
 		/// <returns></returns>
 		private static ILightingDataAsset CreateLightingDataAsset(ProcessedAssetCollection collection)
 		{
-			return collection.CreateAsset((int)ClassIDType.LightingDataAsset, LightingDataAssetFactory.CreateAsset);
+			return collection.CreateAsset((int)ClassIDType.LightingDataAsset, LightingDataAsset.Create);
 		}
 
 		private static ISceneAsset CreateSceneAsset(ProcessedAssetCollection collection, SceneDefinition targetScene)
 		{
-			ISceneAsset asset = collection.CreateAsset((int)ClassIDType.SceneAsset, SceneAssetFactory.CreateAsset);
+			ISceneAsset asset = collection.CreateAsset((int)ClassIDType.SceneAsset, SceneAsset.Create);
 			asset.TargetScene = targetScene;
 			return asset;
 		}

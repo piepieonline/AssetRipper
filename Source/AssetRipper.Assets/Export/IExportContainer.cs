@@ -2,8 +2,6 @@ using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.IO.Files;
 using AssetRipper.IO.Files.SerializedFiles;
-using AssetRipper.Primitives;
-using AssetRipper.VersionUtilities;
 
 namespace AssetRipper.Assets.Export
 {
@@ -13,11 +11,8 @@ namespace AssetRipper.Assets.Export
 		AssetType ToExportType(Type type);
 		MetaPtr CreateExportPointer(IUnityObjectBase asset);
 
-		UnityGUID SceneNameToGUID(string name);
-		string SceneIndexToName(int sceneID);
+		UnityGuid SceneNameToGUID(string name);
 		bool IsSceneDuplicate(int sceneID);
-		string TagIDToName(int tagID);
-		ushort TagNameToID(string tagName);
 
 		AssetCollection File { get; }
 		TemporaryAssetCollection VirtualFile { get; }

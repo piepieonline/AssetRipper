@@ -9,6 +9,7 @@ using AssetRipper.SourceGenerated.Classes.ClassID_141;
 using AssetRipper.SourceGenerated.Classes.ClassID_142;
 using AssetRipper.SourceGenerated.Classes.ClassID_29;
 using AssetRipper.SourceGenerated.Classes.ClassID_3;
+using AssetRipper.SourceGenerated.Extensions;
 using AssetRipper.SourceGenerated.Subclasses.AssetInfo;
 using System.Diagnostics;
 
@@ -16,17 +17,17 @@ namespace AssetRipper.Processing.Scenes
 {
 	public sealed class SceneDefinitionProcessor : IAssetProcessor
 	{
-		public void Process(GameBundle gameBundle, UnityVersion projectVersion)
+		public void Process(GameData gameData)
 		{
 			Logger.Info(LogCategory.Processing, "Creating Scene Definitions");
 			IBuildSettings? buildSettings = null;
 			HashSet<AssetCollection> sceneCollections = new();
 			Dictionary<AssetCollection, string> scenePaths = new();
-			Dictionary<AssetCollection, UnityGUID> sceneGuids = new();
+			Dictionary<AssetCollection, UnityGuid> sceneGuids = new();
 			List<IAssetBundle> sceneAssetBundles = new();
 
 			//Find the relevant assets in this single pass over all the assets.
-			foreach (AssetCollection collection in gameBundle.FetchAssetCollections())
+			foreach (AssetCollection collection in gameData.GameBundle.FetchAssetCollections())
 			{
 				foreach (IUnityObjectBase asset in collection)
 				{
@@ -93,7 +94,7 @@ namespace AssetRipper.Processing.Scenes
 			foreach (AssetCollection sceneCollection in sceneCollections)
 			{
 				SceneDefinition sceneDefinition;
-				UnityGUID guid = sceneGuids.TryGetValue(sceneCollection, out UnityGUID sceneGuid) ? sceneGuid : default;
+				UnityGuid guid = sceneGuids.TryGetValue(sceneCollection, out UnityGuid sceneGuid) ? sceneGuid : default;
 				if (scenePaths.TryGetValue(sceneCollection, out string? path))
 				{
 					sceneDefinition = SceneDefinition.FromPath(path, guid);

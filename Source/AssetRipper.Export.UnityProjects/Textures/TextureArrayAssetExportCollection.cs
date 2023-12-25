@@ -1,11 +1,10 @@
 ﻿using AssetRipper.Assets;
 using AssetRipper.Assets.Export;
 using AssetRipper.Export.UnityProjects.Configuration;
-using AssetRipper.Export.UnityProjects.Project.Collections;
 
 namespace AssetRipper.Export.UnityProjects.Textures;
 
-public sealed class TextureArrayAssetExportCollection : AssetExportCollection
+public sealed class TextureArrayAssetExportCollection : AssetExportCollection<IUnityObjectBase>
 {
 	public TextureArrayAssetExportCollection(TextureArrayAssetExporter assetExporter, IUnityObjectBase asset) : base(assetExporter, asset)
 	{

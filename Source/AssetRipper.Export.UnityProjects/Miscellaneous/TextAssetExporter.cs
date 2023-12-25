@@ -2,7 +2,6 @@ using AssetRipper.Assets;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Export;
 using AssetRipper.Export.UnityProjects.Configuration;
-using AssetRipper.Export.UnityProjects.Project.Exporters;
 using AssetRipper.SourceGenerated.Classes.ClassID_49;
 using AssetRipper.SourceGenerated.Extensions;
 
@@ -20,7 +19,7 @@ namespace AssetRipper.Export.UnityProjects.Miscellaneous
 		{
 			if (asset is ITextAsset textAsset && !textAsset.Script_C49.IsEmpty)
 			{
-				exportCollection = new TextAssetExportCollection(this, asset);
+				exportCollection = new TextAssetExportCollection(this, textAsset);
 				return true;
 			}
 			else

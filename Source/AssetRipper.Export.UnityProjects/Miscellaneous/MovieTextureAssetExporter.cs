@@ -1,7 +1,6 @@
 using AssetRipper.Assets;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Export;
-using AssetRipper.Export.UnityProjects.Project.Exporters;
 using AssetRipper.SourceGenerated.Classes.ClassID_152;
 
 namespace AssetRipper.Export.UnityProjects.Miscellaneous
@@ -12,7 +11,7 @@ namespace AssetRipper.Export.UnityProjects.Miscellaneous
 		{
 			if (asset is IMovieTexture texture && IsValidData(texture.MovieData_C152))
 			{
-				exportCollection = new MovieTextureAssetExportCollection(this, asset);
+				exportCollection = new MovieTextureAssetExportCollection(this, texture);
 				return true;
 			}
 			else

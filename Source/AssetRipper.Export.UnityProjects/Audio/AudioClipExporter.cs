@@ -2,7 +2,6 @@
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Export;
 using AssetRipper.Export.UnityProjects.Configuration;
-using AssetRipper.Export.UnityProjects.Project.Exporters;
 using AssetRipper.SourceGenerated.Classes.ClassID_83;
 using AssetRipper.SourceGenerated.Extensions;
 
@@ -23,7 +22,7 @@ namespace AssetRipper.Export.UnityProjects.Audio
 		{
 			if (asset is IAudioClip audio && AudioClipDecoder.CanDecode(audio))
 			{
-				exportCollection = new AudioClipExportCollection(this, asset);
+				exportCollection = new AudioClipExportCollection(this, audio);
 				return true;
 			}
 			else

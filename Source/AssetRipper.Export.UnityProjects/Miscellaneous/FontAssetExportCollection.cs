@@ -2,7 +2,7 @@
 using AssetRipper.Assets.Cloning;
 using AssetRipper.Assets.Export;
 using AssetRipper.Assets.Metadata;
-using AssetRipper.Export.UnityProjects.Project.Collections;
+using AssetRipper.Export.UnityProjects.Project;
 using AssetRipper.Primitives;
 using AssetRipper.SourceGenerated.Classes.ClassID_1042;
 using AssetRipper.SourceGenerated.Classes.ClassID_128;
@@ -15,7 +15,7 @@ using System.Diagnostics;
 
 namespace AssetRipper.Export.UnityProjects.Miscellaneous
 {
-	public sealed class FontAssetExportCollection : AssetsExportCollection
+	public sealed class FontAssetExportCollection : AssetsExportCollection<IFont>
 	{
 		public FontAssetExportCollection(FontAssetExporter assetExporter, IFont font) : base(assetExporter, font)
 		{
@@ -33,8 +33,8 @@ namespace AssetRipper.Export.UnityProjects.Miscellaneous
 
 		protected override IUnityObjectBase CreateImporter(IExportContainer container)
 		{
-			IFont origin = (IFont)Asset;
-			ITrueTypeFontImporter instance = TrueTypeFontImporterFactory.CreateAsset(container.File, container.ExportVersion);
+			IFont origin = Asset;
+			ITrueTypeFontImporter instance = TrueTypeFontImporter.Create(container.File, container.ExportVersion);
 			instance.FontSize_C1042 = (int)origin.FontSize_C128;
 			instance.IncludeFontData_C1042 = true;
 			instance.Style_C1042 = (int)origin.GetDefaultStyle();

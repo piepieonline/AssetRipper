@@ -21,7 +21,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 		public static ITextureImporter GenerateTextureImporter(IExportContainer container, IUnityObjectBase origin)
 		{
 			TextureImporterData data = new TextureImporterData(origin);
-			ITextureImporter instance = TextureImporterFactory.CreateAsset(container.File, container.ExportVersion);
+			ITextureImporter instance = TextureImporter.Create(container.File, container.ExportVersion);
 			instance.MipMaps_C1006.EnableMipMap = data.EnableMipMap ? 1 : 0;
 			instance.MipMaps_C1006.SRGBTexture = data.SRGBTexture ? 1 : 0;
 			instance.MipMaps_C1006.AlphaTestReferenceValue = 0.5f;
@@ -35,7 +35,11 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			instance.Format_C1006 = (int)data.Format;
 			instance.MaxTextureSize_C1006 = data.MaxTextureSize;
 			instance.TextureSettings_C1006.CopyValues(data.TextureSettings);
-			instance.NPOTScale_C1006E = TextureImporterNPOTScale.ToNearest; // Default texture importer settings uses this value, and cubemaps appear to not work when it's None
+			// cubemaps break when they aren't scaled, while sprites break if they ARE scaled
+			// everything else works with no scaling, so we just only scale for cubemaps
+			instance.NPOTScale_C1006E = origin is ICubemap
+				? TextureImporterNPOTScale.ToNearest
+				: TextureImporterNPOTScale.None;
 			instance.CompressionQuality_C1006 = 50;
 
 			instance.SetSwizzle(TextureImporterSwizzle.R, TextureImporterSwizzle.G, TextureImporterSwizzle.B, TextureImporterSwizzle.A);
@@ -57,7 +61,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			platformSettings.MaxTextureSize = instance.MaxTextureSize_C1006;
 			platformSettings.ResizeAlgorithm = (int)TextureResizeAlgorithm.Mitchell;
 			platformSettings.Format = (int)TextureImporterFormat.Automatic;
-			platformSettings.TextureCompression = (int)TextureImporterCompression.Compressed;//Uncompressed results in a significantly larger Library folder
+			platformSettings.TextureCompression = (int)TextureImporterCompression.CompressedHQ;//Uncompressed results in a significantly larger Library folder
 			platformSettings.CompressionQuality = 50;
 			platformSettings.CrunchedCompression = false;
 			platformSettings.AllowsAlphaSplitting = false;
@@ -174,7 +178,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			{
 				Logger.Warning("IHVImageFormatImporter doesn't exist on versions less than 5.6. A different importer needs to be used on this version");
 			}
-			IIHVImageFormatImporter instance = IHVImageFormatImporterFactory.CreateAsset(container.File, container.ExportVersion);
+			IIHVImageFormatImporter instance = IHVImageFormatImporter.Create(container.File, container.ExportVersion);
 			instance.SetToDefault();
 			instance.IsReadable_C1055 = origin.IsReadable_C28;
 			instance.SRGBTexture_C1055 = origin.ColorSpace_C28E == ColorSpace.Linear;

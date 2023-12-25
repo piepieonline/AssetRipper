@@ -1,5 +1,4 @@
 ﻿using AssetRipper.Assets;
-using AssetRipper.Assets.Bundles;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Assets.Generics;
 using AssetRipper.Assets.Metadata;
@@ -28,12 +27,12 @@ namespace AssetRipper.Processing.StaticMeshes
 		private readonly Dictionary<string, LinkedList<IMesh>> meshNameDictionary = new();
 		private readonly Dictionary<string, List<(IMesh, IRenderer, IMeshFilter, ITransform)>> cleanNameToParts = new();
 
-		public void Process(GameBundle gameBundle, UnityVersion projectVersion)
+		public void Process(GameData gameData)
 		{
 			Logger.Info(LogCategory.Processing, "Separate Static Meshes");
-			ProcessedAssetCollection processedCollection = gameBundle.AddNewProcessedCollection("Separated Static Meshes", projectVersion);
+			ProcessedAssetCollection processedCollection = gameData.AddNewProcessedCollection("Separated Static Meshes");
 
-			foreach (IUnityObjectBase asset in gameBundle.FetchAssets())
+			foreach (IUnityObjectBase asset in gameData.GameBundle.FetchAssets())
 			{
 				if (asset is IMesh mesh)
 				{
@@ -316,9 +315,9 @@ namespace AssetRipper.Processing.StaticMeshes
 
 		private static void ApplyMeshToRendererAndFilter(IMesh mesh, IRenderer renderer, IMeshFilter meshFilter)
 		{
-			meshFilter.Mesh_C33.CopyValues(meshFilter.Collection.ForceCreatePPtr(mesh));
+			meshFilter.Mesh_C33P = mesh;
 			renderer.ClearStaticBatchInfo();
-			renderer.SetStaticEditorFlagsOnGameObject();
+			renderer.MarkGameObjectAsStatic();
 		}
 
 		private static IMesh MakeMeshFromData(string cleanName, MeshData instanceMeshData, ProcessedAssetCollection processedCollection)
@@ -574,7 +573,7 @@ namespace AssetRipper.Processing.StaticMeshes
 
 		private static IMesh CreateMesh(ProcessedAssetCollection processedCollection)
 		{
-			return processedCollection.CreateAsset((int)ClassIDType.Mesh, MeshFactory.CreateAsset);
+			return processedCollection.CreateAsset((int)ClassIDType.Mesh, Mesh.Create);
 		}
 
 		#region Approximate Equality

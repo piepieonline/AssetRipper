@@ -14,12 +14,12 @@ namespace AssetRipper.Processing.PrefabOutlining
 		//That does not affect this processor currently, but it may have an impact on future improvements.
 		//https://blog.unity.com/technology/introducing-unity-2018-3
 
-		public void Process(GameBundle gameBundle, UnityVersion projectVersion)
+		public void Process(GameData gameData)
 		{
 			Logger.Info(LogCategory.Processing, "Prefab Outlining");
-			ProcessedAssetCollection processedCollection = MakeProcessedCollection(gameBundle, projectVersion);
+			ProcessedAssetCollection processedCollection = gameData.AddNewProcessedCollection("Outlined Prefabs");
 			MakeDictionaries(
-				gameBundle,
+				gameData.GameBundle,
 				out Dictionary<IGameObject, GameObjectInfo> infoDictionary,
 				out Dictionary<AssetCollection, bool> sceneInfo);
 			MakeBoxes(
@@ -102,12 +102,12 @@ namespace AssetRipper.Processing.PrefabOutlining
 
 		private static IGameObject CreateNewGameObject(ProcessedAssetCollection collection)
 		{
-			return collection.CreateAsset((int)ClassIDType.GameObject, GameObjectFactory.CreateAsset);
+			return collection.CreateAsset((int)ClassIDType.GameObject, GameObject.Create);
 		}
 
 		private static ITransform CreateNewTransform(ProcessedAssetCollection collection)
 		{
-			return collection.CreateAsset((int)ClassIDType.Transform, TransformFactory.CreateAsset);
+			return collection.CreateAsset((int)ClassIDType.Transform, Transform.Create);
 		}
 
 		private static void MakeBoxes(Dictionary<IGameObject, GameObjectInfo> infoDictionary, Dictionary<AssetCollection, bool> sceneInfo, out Dictionary<string, Dictionary<GameObjectInfo, List<IGameObject>>> boxes, out HashSet<IGameObject> prefabRoots)
@@ -134,14 +134,6 @@ namespace AssetRipper.Processing.PrefabOutlining
 				sceneInfo.Add(collection, collection.IsScene);
 				GameObjectInfo.AddCollectionToDictionary(collection, infoDictionary);
 			}
-		}
-
-		private static ProcessedAssetCollection MakeProcessedCollection(GameBundle gameBundle, UnityVersion projectVersion)
-		{
-			ProcessedAssetCollection processedCollection = new ProcessedAssetCollection(gameBundle);
-			processedCollection.Name = "Outlined Prefabs";
-			processedCollection.SetLayout(projectVersion);
-			return processedCollection;
 		}
 	}
 }

@@ -1,5 +1,4 @@
 ﻿using AssetRipper.Assets;
-using AssetRipper.Assets.Bundles;
 using AssetRipper.Assets.Collections;
 using AssetRipper.Import.Logging;
 using AssetRipper.SourceGenerated;
@@ -15,13 +14,13 @@ namespace AssetRipper.Processing;
 
 public sealed class PrefabProcessor : IAssetProcessor
 {
-	public void Process(GameBundle gameBundle, UnityVersion projectVersion)
+	public void Process(GameData gameData)
 	{
-		ProcessedAssetCollection processedCollection = gameBundle.AddNewProcessedCollection("Generated Prefab Assets", projectVersion);
+		ProcessedAssetCollection processedCollection = gameData.AddNewProcessedCollection("Generated Prefab Assets");
 
 		HashSet<IGameObject> gameObjectsAlreadyProcessed = new();
 		List<IGameObject> gameObjectsWithNoTransform = new();
-		foreach (IUnityObjectBase asset in gameBundle.FetchAssets())
+		foreach (IUnityObjectBase asset in gameData.GameBundle.FetchAssets())
 		{
 			switch (asset)
 			{
@@ -44,7 +43,7 @@ public sealed class PrefabProcessor : IAssetProcessor
 		{
 			Logger.Warning(LogCategory.Processing, $"GameObject {gameObject.Name} has no Transform. Adding one.");
 
-			ITransform transform = processedCollection.CreateAsset((int)ClassIDType.Transform, TransformFactory.CreateAsset);
+			ITransform transform = processedCollection.CreateAsset((int)ClassIDType.Transform, Transform.Create);
 
 			transform.InitializeDefault();
 
@@ -52,7 +51,7 @@ public sealed class PrefabProcessor : IAssetProcessor
 			gameObject.AddComponent(ClassIDType.Transform, transform);
 		}
 
-		foreach (IGameObject asset in gameBundle.FetchAssets().OfType<IGameObject>())
+		foreach (IGameObject asset in gameData.GameBundle.FetchAssets().OfType<IGameObject>())
 		{
 			if (gameObjectsAlreadyProcessed.Contains(asset))
 			{
@@ -81,7 +80,7 @@ public sealed class PrefabProcessor : IAssetProcessor
 
 	private static IPrefabInstance CreatePrefab(ProcessedAssetCollection virtualFile, IGameObject root)
 	{
-		IPrefabInstance prefab = virtualFile.CreateAsset((int)ClassIDType.PrefabInstance, PrefabInstanceFactory.CreateAsset);
+		IPrefabInstance prefab = virtualFile.CreateAsset((int)ClassIDType.PrefabInstance, PrefabInstance.Create);
 
 		prefab.RootGameObject_C1001P = root;
 		prefab.IsPrefabAsset_C1001 = true;

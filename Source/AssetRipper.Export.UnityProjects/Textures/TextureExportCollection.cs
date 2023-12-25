@@ -3,7 +3,7 @@ using AssetRipper.Assets.Export;
 using AssetRipper.Assets.Generics;
 using AssetRipper.Assets.Metadata;
 using AssetRipper.Export.UnityProjects.Configuration;
-using AssetRipper.Export.UnityProjects.Project.Collections;
+using AssetRipper.Export.UnityProjects.Project;
 using AssetRipper.Primitives;
 using AssetRipper.Processing.Textures;
 using AssetRipper.SourceGenerated;
@@ -18,7 +18,7 @@ using System.Diagnostics;
 
 namespace AssetRipper.Export.UnityProjects.Textures
 {
-	public class TextureExportCollection : AssetsExportCollection
+	public class TextureExportCollection : AssetsExportCollection<ITexture2D>
 	{
 		public TextureExportCollection(TextureAssetExporter assetExporter, SpriteInformationObject spriteInformationObject, bool exportSprites)
 			: base(assetExporter, spriteInformationObject.Texture)
@@ -38,7 +38,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 
 		protected override IUnityObjectBase CreateImporter(IExportContainer container)
 		{
-			ITexture2D texture = (ITexture2D)Asset;
+			ITexture2D texture = Asset;
 			if (m_convert)
 			{
 				ITextureImporter importer = ImporterFactory.GenerateTextureImporter(container, texture);
@@ -89,7 +89,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			else if (textureSpriteInformation.Count == 1)
 			{
 				ISprite sprite = textureSpriteInformation.Keys.First();
-				ITexture2D texture = (ITexture2D)Asset;
+				ITexture2D texture = Asset;
 				if (sprite.Rect_C213 == sprite.RD_C213.TextureRect && sprite.NameString == texture.NameString)
 				{
 					importer.SpriteMode_C1006E = SpriteImportMode.Single;
@@ -148,7 +148,7 @@ namespace AssetRipper.Export.UnityProjects.Textures
 			else if (importer.SpriteMode_C1006E == SpriteImportMode.Single)
 			{
 				KeyValuePair<ISprite, ISpriteAtlas?> kvp = textureSpriteInformation.First();
-				ISpriteMetaData smeta = SpriteMetaDataFactory.CreateAsset(kvp.Key.Collection.Version);
+				ISpriteMetaData smeta = SpriteMetaData.Create(kvp.Key.Collection.Version);
 				smeta.FillSpriteMetaData(kvp.Key, kvp.Value);
 				importer.SpriteSheet_C1006.CopyFromSpriteMetaData(smeta);
 			}
@@ -180,7 +180,8 @@ namespace AssetRipper.Export.UnityProjects.Textures
 						ISpriteMetaData smeta = importer.SpriteSheet_C1006.GetSpriteMetaData(sprite.NameString);
 						smeta.InternalID = exportID;
 						AssetPair<AssetPair<int, long>, Utf8String> pair = importer.InternalIDToNameTable_C1006.AddNew();
-						pair.Key.Set((int)ClassIDType.Sprite, exportID);
+						pair.Key.Key = (int)ClassIDType.Sprite;
+						pair.Key.Value = exportID;
 						pair.Value = sprite.Name;
 					}
 				}

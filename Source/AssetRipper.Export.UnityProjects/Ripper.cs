@@ -4,18 +4,17 @@ using AssetRipper.Export.UnityProjects.AnimatorControllers;
 using AssetRipper.Export.UnityProjects.Audio;
 using AssetRipper.Export.UnityProjects.AudioMixers;
 using AssetRipper.Export.UnityProjects.Configuration;
+using AssetRipper.Export.UnityProjects.EngineAssets;
 using AssetRipper.Export.UnityProjects.Meshes;
 using AssetRipper.Export.UnityProjects.Miscellaneous;
 using AssetRipper.Export.UnityProjects.Models;
 using AssetRipper.Export.UnityProjects.NavMeshes;
 using AssetRipper.Export.UnityProjects.PathIdMapping;
 using AssetRipper.Export.UnityProjects.Project;
-using AssetRipper.Export.UnityProjects.Project.Exporters.Engine;
 using AssetRipper.Export.UnityProjects.Scripts;
 using AssetRipper.Export.UnityProjects.Shaders;
 using AssetRipper.Export.UnityProjects.Terrains;
 using AssetRipper.Export.UnityProjects.Textures;
-using AssetRipper.Export.UnityProjects.TypeTrees;
 using AssetRipper.Import.Configuration;
 using AssetRipper.Import.Logging;
 using AssetRipper.Import.Structure;
@@ -25,6 +24,7 @@ using AssetRipper.Processing;
 using AssetRipper.Processing.AnimatorControllers;
 using AssetRipper.Processing.Assemblies;
 using AssetRipper.Processing.AudioMixers;
+using AssetRipper.Processing.Editor;
 using AssetRipper.Processing.PrefabOutlining;
 using AssetRipper.Processing.Scenes;
 using AssetRipper.Processing.StaticMeshes;
@@ -50,6 +50,7 @@ using AssetRipper.SourceGenerated.Classes.ClassID_272;
 using AssetRipper.SourceGenerated.Classes.ClassID_273;
 using AssetRipper.SourceGenerated.Classes.ClassID_28;
 using AssetRipper.SourceGenerated.Classes.ClassID_3;
+using AssetRipper.SourceGenerated.Classes.ClassID_329;
 using AssetRipper.SourceGenerated.Classes.ClassID_43;
 using AssetRipper.SourceGenerated.Classes.ClassID_48;
 using AssetRipper.SourceGenerated.Classes.ClassID_49;
@@ -110,17 +111,11 @@ namespace AssetRipper.Export.UnityProjects
 			gameStructure = GameStructure.Load(paths, Settings);
 			Logger.Info(LogCategory.General, "Finished reading files");
 
-			Logger.Info(LogCategory.General, "Processing assemblies...");
-			if (Settings.ScriptContentLevel == ScriptContentLevel.Level1)
-			{
-				new MethodStubbingProcessor().Process(GameStructure.AssemblyManager);
-			}
-
 			Logger.Info(LogCategory.General, "Processing loaded assets...");
-			UnityVersion version = gameStructure.FileCollection.GetMaxUnityVersion();
+			GameData gameData = GameData.FromGameStructure(gameStructure);
 			foreach (IAssetProcessor processor in GetProcessors())
 			{
-				processor.Process(GameStructure.FileCollection, version);
+				processor.Process(gameData);
 			}
 			Logger.Info(LogCategory.General, "Finished processing assets");
 
@@ -128,12 +123,16 @@ namespace AssetRipper.Export.UnityProjects
 
 			IEnumerable<IAssetProcessor> GetProcessors()
 			{
+				if (Settings.ScriptContentLevel == ScriptContentLevel.Level1)
+				{
+					yield return new MethodStubbingProcessor();
+				}
 				yield return new SceneDefinitionProcessor();
 				yield return new MainAssetProcessor();
 				yield return new LightingDataProcessor();
 				yield return new AnimatorControllerProcessor();
 				yield return new AudioMixerProcessor();
-				yield return new EditorFormatProcessor(Settings.BundledAssetsExportMode, GameStructure.AssemblyManager);
+				yield return new EditorFormatProcessor(Settings.BundledAssetsExportMode);
 				if (Settings.EnableStaticMeshSeparation)
 				{
 					yield return new StaticMeshProcessor();
@@ -209,7 +208,6 @@ namespace AssetRipper.Export.UnityProjects
 				yield return new ProjectVersionPostExporter();
 				yield return new PackageManifestPostExporter();
 				yield return new StreamingAssetsPostExporter();
-				yield return new TypeTreeExporter();
 				yield return new DllPostExporter();
 				yield return new PathIdMapExporter();
 			}
@@ -237,9 +235,7 @@ namespace AssetRipper.Export.UnityProjects
 			//Miscellaneous exporters
 			projectExporter.OverrideExporter<ITextAsset>(new TextAssetExporter(Settings));
 			projectExporter.OverrideExporter<IMovieTexture>(new MovieTextureAssetExporter());
-			VideoClipExporter videoClipExporter = new();
-			projectExporter.OverrideExporter<SourceGenerated.Classes.ClassID_327.IVideoClip>(videoClipExporter);
-			projectExporter.OverrideExporter<SourceGenerated.Classes.ClassID_329.IVideoClip>(videoClipExporter);
+			projectExporter.OverrideExporter<IVideoClip>(new VideoClipExporter());
 
 			//Texture exporters
 			TextureAssetExporter textureExporter = new(Settings);
@@ -323,12 +319,8 @@ namespace AssetRipper.Export.UnityProjects
 					break;
 			}
 
-			//Script exporters
-			projectExporter.OverrideExporter<IMonoScript>(Settings.ScriptExportMode switch
-			{
-				ScriptExportMode.DllExportWithoutRenaming => new AssemblyDllExporter(GameStructure.AssemblyManager),
-				_ => new ScriptExporter(GameStructure.AssemblyManager, Settings),
-			});
+			//Script exporter
+			projectExporter.OverrideExporter<IMonoScript>(new ScriptExporter(GameStructure.AssemblyManager, Settings));
 
 			//Animator Controller
 			projectExporter.OverrideExporter<IUnityObjectBase>(new AnimatorControllerExporter());
